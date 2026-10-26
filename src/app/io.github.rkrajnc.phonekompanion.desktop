@@ -1,0 +1,10 @@
+# SPDX-FileCopyrightText: 2026 Rok Krajnc <rok.krajnc@gmail.com>
+# SPDX-License-Identifier: CC0-1.0
+
+[Desktop Entry]
+Type=Application
+Name=Phone Kompanion
+Comment=Calls and phone apps on your computer
+Exec=phonekompanion
+Icon=smartphone
+Categories=Qt;KDE;Network;

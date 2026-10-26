@@ -1,0 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Rok Krajnc <rok.krajnc@gmail.com>
+# SPDX-License-Identifier: CC0-1.0
+
+[D-BUS Service]
+Name=io.github.rkrajnc.phonekompaniond
+Exec=@KDE_INSTALL_FULL_BINDIR@/phonekompaniond
