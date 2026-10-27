@@ -12,6 +12,7 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.kirigami.delegates as KD
 import io.github.rkrajnc.phonekompanion
+import io.github.rkrajnc.phonekompanion.sms as SMS
 
 Kirigami.ScrollablePage {
     id: page
@@ -22,20 +23,57 @@ Kirigami.ScrollablePage {
     readonly property alias calls: calls
     readonly property bool ready: scrcpy.available && !scrcpy.unavailableReason
 
-    title: phoneName
+    title: phone.name || phoneName
 
-    // Replaces the page next to this one
-    function openSubpage(component: Component): Kirigami.Page {
+    // The page last opened next to this one, by name, for forward to reopen it after back closed it
+    property string subpage
+    // --messages before the phone's status was read
+    property bool messagesWanted: false
+
+    // Replaces the page next to this one: "apps", "dialer", "messages", "callsSettings" or "scrcpySettings"
+    function openSubpage(name: string): Kirigami.Page {
+        const components = {
+            apps: appsPage,
+            dialer: dialerPage,
+            messages: messagesPage,
+            callsSettings: callsSettingsPage,
+            scrcpySettings: scrcpySettingsPage
+        };
+        if (!canOpen(name)) {
+            return null;
+        }
+        // Another page opened meanwhile wins over a waiting --messages
+        if (name !== "messages") {
+            messagesWanted = false;
+        }
+        subpage = name;
         pageStack.pop(page);
-        return pageStack.push(component);
+        return pageStack.push(components[name]);
+    }
+
+    // As the entries here allow: Messages only while KDE Connect's SMS plugin is there, as the
+    // conversations load only then, and the apps only while mirroring is possible
+    function canOpen(name: string): bool {
+        if (name === "messages") {
+            return phone.messagesAvailable;
+        } else if (name === "apps") {
+            return ready;
+        }
+        return true;
     }
 
     function openApps() {
-        return openSubpage(appsPage);
+        return openSubpage("apps");
     }
 
     function openDialer() {
-        return openSubpage(dialerPage);
+        return openSubpage("dialer");
+    }
+
+    function openMessages() {
+        // A page just opened has not read the phone's status yet
+        messagesWanted = !phone.available;
+        return openSubpage("messages");
     }
 
     actions: [
@@ -46,15 +84,26 @@ Kirigami.ScrollablePage {
             Kirigami.Action {
                 icon.name: "call-start"
                 text: i18n("Calls")
-                onTriggered: page.openSubpage(callsSettingsPage)
+                onTriggered: page.openSubpage("callsSettings")
             }
             Kirigami.Action {
                 icon.name: "video-display"
                 text: i18n("Screen Mirroring")
-                onTriggered: page.openSubpage(scrcpySettingsPage)
+                onTriggered: page.openSubpage("scrcpySettings")
             }
         }
     ]
+
+    PhoneInterface {
+        id: phone
+        phoneId: page.phoneId
+        onStatusChanged: {
+            if (page.messagesWanted && available) {
+                page.messagesWanted = false;
+                page.openMessages();
+            }
+        }
+    }
 
     ScrcpyInterface {
         id: scrcpy
@@ -87,7 +136,30 @@ Kirigami.ScrollablePage {
         DialerPage {
             calls: page.calls
             phoneName: page.phoneName
-            onSettingsRequested: page.openSubpage(callsSettingsPage)
+            onSettingsRequested: page.openSubpage("callsSettings")
+        }
+    }
+
+    // KDE Connect's SMS pages, which open the conversations themselves
+    Component {
+        id: messagesPage
+        // Opened only while KDE Connect's SMS plugin is there, as the conversations load only then
+        SMS.ConversationList {
+            id: messagesList
+
+            title: i18n("Messages")
+            deviceId: page.phoneId
+            deviceConnected: phone.messagesAvailable
+
+            // Back, e.g. after the phone left the network: KDE Connect does not send the list by itself
+            Connections {
+                target: phone
+                function onMessagesAvailableChanged() {
+                    if (phone.messagesAvailable) {
+                        messagesList.refresh();
+                    }
+                }
+            }
         }
     }
 
@@ -130,6 +202,27 @@ Kirigami.ScrollablePage {
 
         Kirigami.ListSectionHeader {
             Layout.fillWidth: true
+            text: i18n("Messages")
+        }
+
+        KD.SubtitleDelegate {
+            Layout.fillWidth: true
+            icon.name: "dialog-messages"
+            text: i18n("Messages")
+            subtitle: {
+                if (phone.messagesAvailable) {
+                    return i18n("Read and send SMS through KDE Connect");
+                } else if (phone.reachable) {
+                    return i18n("SMS is not available for this phone in KDE Connect");
+                }
+                return i18n("Needs the phone connected to KDE Connect");
+            }
+            enabled: phone.messagesAvailable
+            onClicked: page.openMessages()
+        }
+
+        Kirigami.ListSectionHeader {
+            Layout.fillWidth: true
             text: i18n("Screen Mirroring")
         }
 
@@ -143,7 +236,7 @@ Kirigami.ScrollablePage {
                 visible: scrcpy.available && scrcpy.missingTools.length === 0 && scrcpy.networkReachable
                 icon.name: "network-connect"
                 text: i18n("Pair…")
-                onTriggered: page.openSubpage(scrcpySettingsPage)
+                onTriggered: page.openSubpage("scrcpySettings")
             }
         }
 

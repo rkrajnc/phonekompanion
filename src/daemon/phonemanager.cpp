@@ -84,7 +84,7 @@ void PhoneManager::refresh()
     bool connected = false;
 
     for (const QString &id : *ids) {
-        const QVariantMap properties = m_kdeConnect->deviceProperties(id);
+        QVariantMap properties = m_kdeConnect->deviceProperties(id);
         if (properties.isEmpty()) {
             if (m_phones.contains(id)) {
                 found.insert(id);
@@ -94,6 +94,13 @@ void PhoneManager::refresh()
         const QString type = properties.value(QStringLiteral("type")).toString();
         if (type != QLatin1String("phone") && type != QLatin1String("tablet")) {
             continue;
+        }
+
+        // E.g. kdeconnect_sms for the SMS conversations; left out on failure, so the phone keeps what it knew
+        if (properties.value(QStringLiteral("isReachable")).toBool()) {
+            if (const std::optional<QStringList> plugins = m_kdeConnect->loadedPlugins(id)) {
+                properties.insert(QStringLiteral("loadedPlugins"), *plugins);
+            }
         }
 
         found.insert(id);

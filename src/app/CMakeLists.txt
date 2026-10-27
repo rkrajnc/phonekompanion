@@ -1,7 +1,10 @@
+add_subdirectory(sms)
+
 add_executable(phonekompanion
     main.cpp
     callsinterface.cpp
     phonefeature.cpp
+    phoneinterface.cpp
     phonesmodel.cpp
     scrcpyinterface.cpp
 )
@@ -10,6 +13,7 @@ ecm_add_qml_module(phonekompanion URI io.github.rkrajnc.phonekompanion)
 
 ecm_target_qml_sources(phonekompanion SOURCES
     qml/Main.qml
+    qml/PageTitle.qml
     qml/PhonePage.qml
     qml/AppsPage.qml
     qml/ScrcpySettingsPage.qml
@@ -28,6 +32,7 @@ target_link_libraries(phonekompanion PRIVATE
     KF6::I18n
     KF6::I18nQml
     KF6::WindowSystem
+    phonekompanionsmsplugin
 )
 
 install(TARGETS phonekompanion ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})

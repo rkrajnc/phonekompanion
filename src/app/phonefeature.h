@@ -16,7 +16,7 @@
 class QDBusMessage;
 
 /**
- * A feature object of a phone in phonekompaniond, /phones/<id>/<name>, over D-Bus: its status
+ * A phone in phonekompaniond, /phones/<id>, or one of its features, /phones/<id>/<name>, over D-Bus: its status
  * properties, its settings and its methods. All calls are asynchronous and do not start the
  * daemon; errors of the actions arrive as error().
  */
@@ -31,7 +31,11 @@ class PhoneFeature : public QObject
     Q_PROPERTY(QVariantMap settings READ settings NOTIFY settingsChanged)
 
 public:
-    PhoneFeature(const QString &name, const QString &interface, QObject *parent = nullptr);
+    /**
+     * Without its own signals, the daemon's object has no statusChanged, settingsChanged and
+     * settings(), and phonesChanged alone tells of changes, as for /phones/<id>
+     */
+    PhoneFeature(const QString &name, const QString &interface, QObject *parent = nullptr, bool ownSignals = true);
 
     QString phoneId() const;
     void setPhoneId(const QString &phoneId);
@@ -86,6 +90,7 @@ private:
 
     const QString m_name;
     const QString m_interface;
+    const bool m_ownSignals;
     QString m_phoneId;
     QVariantMap m_status;
     QVariantMap m_settings;

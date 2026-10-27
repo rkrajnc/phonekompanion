@@ -28,6 +28,8 @@ find_package(KF6 ${KF_MIN_VERSION} REQUIRED COMPONENTS Config CoreAddons DBusAdd
 
 ecm_find_qmlmodule(org.kde.kirigami REQUIRED)
 ecm_find_qmlmodule(org.kde.prison REQUIRED)
+ecm_find_qmlmodule(QtMultimedia REQUIRED)
+ecm_find_qmlmodule(org.kde.kirigamiaddons.components REQUIRED)
 
 ecm_setup_version(PROJECT
     VARIABLE_PREFIX PHONEKOMPANION

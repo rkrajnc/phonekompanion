@@ -32,6 +32,11 @@ public:
      * The org.kde.kdeconnect.device properties (name, type, isReachable, ...), empty when KDE Connect did not answer
      */
     QVariantMap deviceProperties(const QString &id) const;
+    /**
+     * The plugins loaded for a device, which happens only while it is reachable; nullopt when
+     * KDE Connect did not answer
+     */
+    std::optional<QStringList> loadedPlugins(const QString &id) const;
 
 Q_SIGNALS:
     /**

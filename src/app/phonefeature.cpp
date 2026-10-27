@@ -15,10 +15,11 @@
 #include "dbuscall.h"
 #include "dbusnames.h"
 
-PhoneFeature::PhoneFeature(const QString &name, const QString &interface, QObject *parent)
+PhoneFeature::PhoneFeature(const QString &name, const QString &interface, QObject *parent, bool ownSignals)
     : QObject(parent)
     , m_name(name)
     , m_interface(interface)
+    , m_ownSignals(ownSignals)
 {
     QDBusConnection bus = QDBusConnection::sessionBus();
     auto watcher = new QDBusServiceWatcher(PHONEKOMPANION_SERVICE, bus, QDBusServiceWatcher::WatchForOwnerChange, this);
@@ -159,17 +160,18 @@ void PhoneFeature::readSettings()
 
 QString PhoneFeature::path() const
 {
-    return PHONEKOMPANION_PHONES_PATH + QLatin1Char('/') + m_phoneId + QLatin1Char('/') + m_name;
+    const QString phone = PHONEKOMPANION_PHONES_PATH + QLatin1Char('/') + m_phoneId;
+    return m_name.isEmpty() ? phone : phone + QLatin1Char('/') + m_name;
 }
 
 void PhoneFeature::connectSignals(bool connect)
 {
-    if (m_phoneId.isEmpty()) {
+    if (m_phoneId.isEmpty() || !m_ownSignals) {
         return;
     }
     QDBusConnection bus = QDBusConnection::sessionBus();
     QList<SignalSlot> signalSlots = this->signalSlots();
-    signalSlots.append({{"statusChanged", SLOT(readStatus())}, {"settingsChanged", SLOT(readSettings())}});
+    signalSlots.append({SignalSlot("statusChanged", SLOT(readStatus())), SignalSlot("settingsChanged", SLOT(readSettings()))});
     for (const auto &[signal, slot] : std::as_const(signalSlots)) {
         if (connect) {
             bus.connect(PHONEKOMPANION_SERVICE, path(), m_interface, QLatin1String(signal), this, slot);
@@ -182,7 +184,9 @@ void PhoneFeature::connectSignals(bool connect)
 void PhoneFeature::readAll()
 {
     readStatus();
-    readSettings();
+    if (m_ownSignals) {
+        readSettings();
+    }
     readMore();
 }
 

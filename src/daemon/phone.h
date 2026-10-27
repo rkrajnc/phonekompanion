@@ -25,6 +25,8 @@ class Phone : public QObject
     Q_PROPERTY(bool reachable READ isReachable)
     // Connected over Bluetooth for calls, and calls are on for this computer
     Q_PROPERTY(bool callsConnected READ callsConnected)
+    // KDE Connect's SMS plugin is loaded for the phone, which needs it reachable
+    Q_PROPERTY(bool messagesAvailable READ messagesAvailable)
 
 public:
     Phone(const QString &id, QObject *parent = nullptr);
@@ -34,6 +36,7 @@ public:
     QString name() const;
     bool isReachable() const;
     bool callsConnected() const;
+    bool messagesAvailable() const;
     /**
      * The phone's IP addresses, while KDE Connect reaches it over the network
      */
@@ -67,6 +70,7 @@ private:
     const QString m_id;
     QString m_name;
     bool m_reachable = false;
+    bool m_messagesAvailable = false;
     QStringList m_addresses;
     Scrcpy *m_scrcpy = nullptr;
     Calls *m_calls = nullptr;

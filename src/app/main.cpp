@@ -8,6 +8,7 @@
 #include <QCommandLineParser>
 #include <QIcon>
 #include <QQmlApplicationEngine>
+#include <QQmlExtensionPlugin>
 #include <QUrl>
 #include <QWindow>
 
@@ -18,6 +19,8 @@
 #include <KWindowSystem>
 
 #include "phonekompanion-version.h"
+
+Q_IMPORT_QML_PLUGIN(PhoneKompanionSmsPlugin)
 
 static void raiseWindow(QWindow *window)
 {
@@ -39,7 +42,7 @@ static QString telNumber(const QString &link)
     return number.section(QLatin1Char(';'), 0, 0).trimmed();
 }
 
-// --phone, --apps, --dialer and tel: links, from this start or from a second start that activates this window
+// --phone, --apps, --messages, --dialer and tel: links, from this start or from a second start that activates this window
 static void openPhone(QCommandLineParser &parser, const QStringList &arguments, QObject *window)
 {
     if (!parser.parse(arguments)) {
@@ -53,7 +56,14 @@ static void openPhone(QCommandLineParser &parser, const QStringList &arguments, 
     }
     // Without --phone, the window picks the phone connected for calls once it has read the phones
     const QString phone = parser.value(QStringLiteral("phone"));
-    const QString subpage = dialer ? QStringLiteral("dialer") : parser.isSet(QStringLiteral("apps")) ? QStringLiteral("apps") : QString();
+    QString subpage;
+    if (dialer) {
+        subpage = QStringLiteral("dialer");
+    } else if (parser.isSet(QStringLiteral("apps"))) {
+        subpage = QStringLiteral("apps");
+    } else if (parser.isSet(QStringLiteral("messages"))) {
+        subpage = QStringLiteral("messages");
+    }
     QMetaObject::invokeMethod(window, "openPhoneById", Qt::QueuedConnection, Q_ARG(QString, phone), Q_ARG(QString, subpage), Q_ARG(QString, number));
 }
 
@@ -77,6 +87,7 @@ int main(int argc, char *argv[])
     QCommandLineParser parser;
     parser.addOption(QCommandLineOption(QStringLiteral("phone"), i18n("Open the page of this phone, by its KDE Connect id"), i18n("id")));
     parser.addOption(QCommandLineOption(QStringLiteral("apps"), i18n("Open the phone's apps, with --phone")));
+    parser.addOption(QCommandLineOption(QStringLiteral("messages"), i18n("Open the phone's SMS conversations, with --phone")));
     parser.addOption(QCommandLineOption(QStringLiteral("dialer"), i18n("Open the phone dialer, of --phone or else of the phone connected for calls")));
     parser.addPositionalArgument(QStringLiteral("link"), i18n("A tel: link, to open the dialer with its number"), QStringLiteral("[tel:number]"));
     aboutData.setupCommandLine(&parser);

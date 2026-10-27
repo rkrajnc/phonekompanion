@@ -42,7 +42,8 @@ KdeConnect::KdeConnect(QObject *parent)
                                   QStringLiteral("typeChanged"),
                                   QStringLiteral("reachableChanged"),
                                   QStringLiteral("pairStateChanged"),
-                                  QStringLiteral("linksChanged")}) {
+                                  QStringLiteral("linksChanged"),
+                                  QStringLiteral("pluginsChanged")}) {
         bus.connect(KDECONNECT_SERVICE, QString(), KDECONNECT_DEVICE_INTERFACE, signal, this, SIGNAL(devicesChanged()));
     }
     bus.connect(KDECONNECT_SERVICE, QString(), KDECONNECT_TELEPHONY_INTERFACE, QStringLiteral("callReceived"), this, SLOT(telephonyCallReceived(QDBusMessage)));
@@ -94,6 +95,21 @@ QVariantMap KdeConnect::deviceProperties(const QString &id) const
     if (!reply.isValid()) {
         qCWarning(PHONEKOMPANIOND) << "Could not read the KDE Connect device" << id << reply.error().message();
         return {};
+    }
+    return reply.value();
+}
+
+std::optional<QStringList> KdeConnect::loadedPlugins(const QString &id) const
+{
+    QDBusMessage message = QDBusMessage::createMethodCall(KDECONNECT_SERVICE,
+                                                          KDECONNECT_PATH + QStringLiteral("/devices/") + id,
+                                                          KDECONNECT_DEVICE_INTERFACE,
+                                                          QStringLiteral("loadedPlugins"));
+    message.setAutoStartService(false);
+    const QDBusReply<QStringList> reply = QDBusConnection::sessionBus().call(message, QDBus::Block, CallTimeout);
+    if (!reply.isValid()) {
+        qCWarning(PHONEKOMPANIOND) << "Could not read the plugins of the KDE Connect device" << id << reply.error().message();
+        return std::nullopt;
     }
     return reply.value();
 }
