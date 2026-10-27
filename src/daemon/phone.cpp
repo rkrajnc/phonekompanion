@@ -37,17 +37,26 @@ bool Phone::isReachable() const
     return m_reachable;
 }
 
+QStringList Phone::addresses() const
+{
+    return m_addresses;
+}
+
 bool Phone::update(const QVariantMap &properties)
 {
     const QString name = properties.value(QStringLiteral("name")).toString();
     const bool reachable = properties.value(QStringLiteral("isReachable")).toBool();
-    if (name == m_name && reachable == m_reachable) {
+    const QStringList addresses = properties.value(QStringLiteral("reachableAddresses")).toStringList();
+    if (name == m_name && reachable == m_reachable && addresses == m_addresses) {
         return false;
     }
 
+    const bool visible = name != m_name || reachable != m_reachable;
     m_name = name;
     m_reachable = reachable;
-    return true;
+    m_addresses = addresses;
+    Q_EMIT changed();
+    return visible;
 }
 
 QString Phone::dbusPath() const

@@ -9,14 +9,17 @@
 #include <QDBusConnection>
 #include <QSet>
 
+#include "adb.h"
 #include "dbusnames.h"
 #include "kdeconnect.h"
 #include "phone.h"
 #include "phonekompaniond_debug.h"
+#include "scrcpy.h"
 
 PhoneManager::PhoneManager(QObject *parent)
     : QObject(parent)
     , m_kdeConnect(new KdeConnect(this))
+    , m_adb(new Adb(this))
 {
     // KDE Connect sends several signals when a device connects; read the devices once
     m_refreshTimer.setSingleShot(true);
@@ -58,7 +61,19 @@ void PhoneManager::refresh()
 
     bool changed = m_kdeConnectRunning != m_kdeConnect->isRunning();
     m_kdeConnectRunning = m_kdeConnect->isRunning();
+    if (!m_kdeConnectRunning) {
+        // Only KDE Connect lost track of them; keep the phones and their mirroring windows
+        for (Phone *phone : std::as_const(m_phones)) {
+            changed |= phone->update({{QStringLiteral("name"), phone->name()}});
+        }
+        if (changed) {
+            Q_EMIT phonesChanged();
+        }
+        return;
+    }
+
     QSet<QString> found;
+    bool connected = false;
 
     for (const QString &id : *ids) {
         const QVariantMap properties = m_kdeConnect->deviceProperties(id);
@@ -78,9 +93,12 @@ void PhoneManager::refresh()
         if (!phone) {
             qCDebug(PHONEKOMPANIOND) << "Phone added" << id;
             phone = new Phone(id, this);
+            new Scrcpy(phone, m_adb);
             changed = true;
         }
+        const bool wasReachable = phone->isReachable();
         changed |= phone->update(properties);
+        connected |= phone->isReachable() && !wasReachable;
     }
 
     for (auto it = m_phones.begin(); it != m_phones.end();) {
@@ -94,6 +112,10 @@ void PhoneManager::refresh()
         changed = true;
     }
 
+    // The tools may have been installed while no phone was connected
+    if (connected) {
+        m_adb->findTools();
+    }
     if (changed) {
         Q_EMIT phonesChanged();
     }

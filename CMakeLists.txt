@@ -23,8 +23,8 @@ include(FeatureSummary)
 include(KDEClangFormat)
 include(KDEGitCommitHooks)
 
-find_package(Qt6 ${QT_MIN_VERSION} REQUIRED COMPONENTS Core DBus Gui Qml Quick Widgets)
-find_package(KF6 ${KF_MIN_VERSION} REQUIRED COMPONENTS CoreAddons DBusAddons I18n StatusNotifierItem WindowSystem)
+find_package(Qt6 ${QT_MIN_VERSION} REQUIRED COMPONENTS Core DBus Gui Network Qml Quick Widgets)
+find_package(KF6 ${KF_MIN_VERSION} REQUIRED COMPONENTS Config CoreAddons DBusAddons I18n Notifications StatusNotifierItem WindowSystem)
 
 ecm_find_qmlmodule(org.kde.kirigami REQUIRED)
 
@@ -34,6 +34,8 @@ ecm_setup_version(PROJECT
 )
 
 add_definitions(-DTRANSLATION_DOMAIN=\"phonekompanion\")
+# As in KDE Connect, where most of the code comes from
+add_definitions(-DQT_NO_URL_CAST_FROM_STRING -DQT_NO_KEYWORDS -DQT_NO_CAST_FROM_ASCII -DQT_NO_CONTEXTLESS_CONNECT)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 add_subdirectory(src/daemon)

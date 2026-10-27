@@ -10,6 +10,7 @@
 #include <QObject>
 #include <QTimer>
 
+class Adb;
 class KdeConnect;
 class Phone;
 
@@ -44,6 +45,7 @@ private:
     void refresh();
 
     KdeConnect *m_kdeConnect;
+    Adb *m_adb;
     QHash<QString, Phone *> m_phones;
     bool m_kdeConnectRunning = false;
     QTimer m_refreshTimer;

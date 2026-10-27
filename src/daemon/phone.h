@@ -7,6 +7,7 @@
 #pragma once
 
 #include <QObject>
+#include <QStringList>
 #include <QVariantMap>
 
 /**
@@ -27,16 +28,23 @@ public:
     QString id() const;
     QString name() const;
     bool isReachable() const;
+    /**
+     * The phone's IP addresses, while KDE Connect reaches it over the network
+     */
+    QStringList addresses() const;
+    QString dbusPath() const;
 
     /**
-     * Takes the KDE Connect device properties, returns whether anything changed
+     * Takes the KDE Connect device properties, returns whether a property on D-Bus changed
      */
     bool update(const QVariantMap &properties);
 
-private:
-    QString dbusPath() const;
+Q_SIGNALS:
+    void changed();
 
+private:
     const QString m_id;
     QString m_name;
     bool m_reachable = false;
+    QStringList m_addresses;
 };
