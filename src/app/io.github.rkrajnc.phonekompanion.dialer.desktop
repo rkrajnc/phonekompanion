@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: 2026 Rok Krajnc <rok.krajnc@gmail.com>
+# SPDX-License-Identifier: CC0-1.0
+
+[Desktop Entry]
+Name=Phone Dialer
+GenericName=Phone Calls
+Comment=Call contacts and phone numbers through your phone
+Exec=phonekompanion --dialer
+Icon=call-start
+Type=Application
+Terminal=false
+Categories=Qt;KDE;Network;Telephony;
+StartupWMClass=phonekompanion

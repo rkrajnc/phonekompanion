@@ -61,6 +61,8 @@ QVariant PhonesModel::data(const QModelIndex &index, int role) const
         return phone.name;
     case ReachableRole:
         return phone.reachable;
+    case CallsConnectedRole:
+        return phone.callsConnected;
     }
     return {};
 }
@@ -71,6 +73,7 @@ QHash<int, QByteArray> PhonesModel::roleNames() const
         {PhoneIdRole, "phoneId"},
         {NameRole, "name"},
         {ReachableRole, "reachable"},
+        {CallsConnectedRole, "callsConnected"},
     };
 }
 
@@ -95,6 +98,14 @@ int PhonesModel::indexOf(const QString &phoneId) const
         return phone.id == phoneId;
     });
     return it == m_phones.cend() ? -1 : it - m_phones.cbegin();
+}
+
+int PhonesModel::rowForCalls() const
+{
+    const auto it = std::find_if(m_phones.cbegin(), m_phones.cend(), [](const Phone &phone) {
+        return phone.callsConnected;
+    });
+    return it != m_phones.cend() ? it - m_phones.cbegin() : m_phones.isEmpty() ? -1 : 0;
 }
 
 void PhonesModel::startService()
@@ -148,7 +159,10 @@ void PhonesModel::refresh()
                 const QDBusPendingReply<QVariantMap> phoneReply = *phoneWatcher;
                 if (phoneReply.isValid()) {
                     const QVariantMap properties = phoneReply.value();
-                    pending->phones.append({id, properties.value(QStringLiteral("name")).toString(), properties.value(QStringLiteral("reachable")).toBool()});
+                    pending->phones.append({id,
+                                            properties.value(QStringLiteral("name")).toString(),
+                                            properties.value(QStringLiteral("reachable")).toBool(),
+                                            properties.value(QStringLiteral("callsConnected")).toBool()});
                 }
                 if (--pending->remaining == 0 && generation == m_generation) {
                     setPhones(pending->phones, pending->kdeConnectRunning);

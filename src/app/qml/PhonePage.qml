@@ -19,31 +19,51 @@ Kirigami.ScrollablePage {
     required property string phoneId
     required property string phoneName
     readonly property alias scrcpy: scrcpy
+    readonly property alias calls: calls
     readonly property bool ready: scrcpy.available && !scrcpy.unavailableReason
 
     title: phoneName
 
-    // Replaces the apps or settings page next to this one
-    function openApps() {
+    // Replaces the page next to this one
+    function openSubpage(component: Component): Kirigami.Page {
         pageStack.pop(page);
-        return pageStack.push(appsPage);
+        return pageStack.push(component);
     }
 
-    function openSettings() {
-        pageStack.pop(page);
-        return pageStack.push(settingsPage);
+    function openApps() {
+        return openSubpage(appsPage);
+    }
+
+    function openDialer() {
+        return openSubpage(dialerPage);
     }
 
     actions: [
         Kirigami.Action {
             icon.name: "configure"
             text: i18n("Settings")
-            onTriggered: page.openSettings()
+
+            Kirigami.Action {
+                icon.name: "call-start"
+                text: i18n("Calls")
+                onTriggered: page.openSubpage(callsSettingsPage)
+            }
+            Kirigami.Action {
+                icon.name: "video-display"
+                text: i18n("Screen Mirroring")
+                onTriggered: page.openSubpage(scrcpySettingsPage)
+            }
         }
     ]
 
     ScrcpyInterface {
         id: scrcpy
+        phoneId: page.phoneId
+        onError: message => applicationWindow().showPassiveNotification(message)
+    }
+
+    CallsInterface {
+        id: calls
         phoneId: page.phoneId
         onError: message => applicationWindow().showPassiveNotification(message)
     }
@@ -56,14 +76,62 @@ Kirigami.ScrollablePage {
     }
 
     Component {
-        id: settingsPage
+        id: scrcpySettingsPage
         ScrcpySettingsPage {
             scrcpy: page.scrcpy
         }
     }
 
+    Component {
+        id: dialerPage
+        DialerPage {
+            calls: page.calls
+            phoneName: page.phoneName
+            onSettingsRequested: page.openSubpage(callsSettingsPage)
+        }
+    }
+
+    Component {
+        id: callsSettingsPage
+        CallsSettingsPage {
+            calls: page.calls
+        }
+    }
+
     ColumnLayout {
         spacing: 0
+
+        Kirigami.ListSectionHeader {
+            Layout.fillWidth: true
+            text: i18n("Calls")
+        }
+
+        KD.SubtitleDelegate {
+            Layout.fillWidth: true
+            icon.name: "call-start"
+            text: i18n("Phone Calls")
+            subtitle: {
+                const caller = calls.callName || calls.callNumber || i18n("unknown number");
+                if (calls.callState === "incoming" || calls.callState === "waiting") {
+                    return i18n("Incoming call from %1", caller);
+                } else if (calls.callState !== "") {
+                    return i18n("In a call with %1", caller);
+                } else if (!calls.available || calls.gatewayConnected) {
+                    return i18n("Call numbers and contacts through the phone");
+                } else if (!calls.telephonyAvailable) {
+                    return i18n("Needs PipeWire with telephony support");
+                } else if (calls.settings.useThisComputer === false) {
+                    return i18n("Turned off for this computer");
+                }
+                return i18n("Not connected over Bluetooth");
+            }
+            onClicked: page.openDialer()
+        }
+
+        Kirigami.ListSectionHeader {
+            Layout.fillWidth: true
+            text: i18n("Screen Mirroring")
+        }
 
         Kirigami.InlineMessage {
             Layout.fillWidth: true
@@ -75,7 +143,7 @@ Kirigami.ScrollablePage {
                 visible: scrcpy.available && scrcpy.missingTools.length === 0 && scrcpy.networkReachable
                 icon.name: "network-connect"
                 text: i18n("Pair…")
-                onTriggered: page.openSettings()
+                onTriggered: page.openSubpage(scrcpySettingsPage)
             }
         }
 

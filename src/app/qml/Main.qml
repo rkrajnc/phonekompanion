@@ -34,20 +34,34 @@ Kirigami.ApplicationWindow {
     // Waits for the daemon's phones, e.g. right after the window started
     property var pendingPhone: null
 
-    function openPhoneById(phoneId: string, apps: bool) {
-        const row = phonesModel.indexOf(phoneId);
+    // subpage is "apps", "dialer" or empty; without a phone id, the phone connected for calls
+    function openPhoneById(phoneId: string, subpage: string) {
+        const row = phoneId ? phonesModel.indexOf(phoneId) : phonesModel.rowForCalls();
         if (row < 0) {
-            // An unknown phone is dropped once the phones were read
-            pendingPhone = phonesModel.loaded ? null : {
+            // Dropped once KDE Connect's phones were read, as it is then not paired
+            pendingPhone = phonesModel.loaded && phonesModel.kdeConnectRunning ? null : {
                 phoneId: phoneId,
-                apps: apps
+                subpage: subpage
             };
             return;
         }
         pendingPhone = null;
-        const page = openPhone(phoneId, phonesModel.data(phonesModel.index(row, 0)));
-        if (apps) {
+        const index = phonesModel.index(row, 0);
+        const page = openPhone(phonesModel.data(index, PhonesModel.PhoneIdRole), phonesModel.data(index));
+        if (subpage === "apps") {
             page.openApps();
+        } else if (subpage === "dialer") {
+            page.openDialer();
+        }
+    }
+
+    // Back closes the last page, rather than only scrolling or moving the focus left. The back
+    // button sits on the leftmost visible page and makes that one current first.
+    Connections {
+        target: root.pageStack.currentItem
+        function onBackRequested(event) {
+            event.accepted = true;
+            root.pageStack.pop();
         }
     }
 
@@ -67,7 +81,7 @@ Kirigami.ApplicationWindow {
                 // Close the page of a phone that was unpaired, or of all phones when the service stops
                 onModelReset: {
                     if (root.pendingPhone && loaded) {
-                        root.openPhoneById(root.pendingPhone.phoneId, root.pendingPhone.apps);
+                        root.openPhoneById(root.pendingPhone.phoneId, root.pendingPhone.subpage);
                     }
                     const page = root.pageStack.get(1);
                     if (page && indexOf(page.phoneId) < 0) {

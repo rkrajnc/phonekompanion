@@ -1,5 +1,7 @@
 add_executable(phonekompanion
     main.cpp
+    callsinterface.cpp
+    phonefeature.cpp
     phonesmodel.cpp
     scrcpyinterface.cpp
 )
@@ -11,6 +13,8 @@ ecm_target_qml_sources(phonekompanion SOURCES
     qml/PhonePage.qml
     qml/AppsPage.qml
     qml/ScrcpySettingsPage.qml
+    qml/DialerPage.qml
+    qml/CallsSettingsPage.qml
 )
 
 target_include_directories(phonekompanion PRIVATE ${CMAKE_SOURCE_DIR}/src)
@@ -27,4 +31,4 @@ target_link_libraries(phonekompanion PRIVATE
 )
 
 install(TARGETS phonekompanion ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
-install(PROGRAMS io.github.rkrajnc.phonekompanion.desktop DESTINATION ${KDE_INSTALL_APPDIR})
+install(PROGRAMS io.github.rkrajnc.phonekompanion.desktop io.github.rkrajnc.phonekompanion.dialer.desktop DESTINATION ${KDE_INSTALL_APPDIR})

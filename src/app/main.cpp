@@ -24,20 +24,21 @@ static void raiseWindow(QWindow *window)
     KWindowSystem::activateWindow(window);
 }
 
-// --phone and --apps, from this start or from a second start that activates this window
+// --phone, --apps and --dialer, from this start or from a second start that activates this window
 static void openPhone(QCommandLineParser &parser, const QStringList &arguments, QObject *window)
 {
     if (!parser.parse(arguments)) {
         qWarning() << parser.errorText();
         return;
     }
-    if (parser.isSet(QStringLiteral("phone"))) {
-        QMetaObject::invokeMethod(window,
-                                  "openPhoneById",
-                                  Qt::QueuedConnection,
-                                  Q_ARG(QString, parser.value(QStringLiteral("phone"))),
-                                  Q_ARG(bool, parser.isSet(QStringLiteral("apps"))));
+    const bool dialer = parser.isSet(QStringLiteral("dialer"));
+    if (!parser.isSet(QStringLiteral("phone")) && !dialer) {
+        return;
     }
+    // Without --phone, the window picks the phone connected for calls once it has read the phones
+    const QString phone = parser.value(QStringLiteral("phone"));
+    const QString subpage = dialer ? QStringLiteral("dialer") : parser.isSet(QStringLiteral("apps")) ? QStringLiteral("apps") : QString();
+    QMetaObject::invokeMethod(window, "openPhoneById", Qt::QueuedConnection, Q_ARG(QString, phone), Q_ARG(QString, subpage));
 }
 
 int main(int argc, char *argv[])
@@ -60,6 +61,7 @@ int main(int argc, char *argv[])
     QCommandLineParser parser;
     parser.addOption(QCommandLineOption(QStringLiteral("phone"), i18n("Open the page of this phone, by its KDE Connect id"), i18n("id")));
     parser.addOption(QCommandLineOption(QStringLiteral("apps"), i18n("Open the phone's apps, with --phone")));
+    parser.addOption(QCommandLineOption(QStringLiteral("dialer"), i18n("Open the phone dialer, of --phone or else of the phone connected for calls")));
     aboutData.setupCommandLine(&parser);
     parser.process(app);
     aboutData.processCommandLine(&parser);

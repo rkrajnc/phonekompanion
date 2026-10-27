@@ -23,6 +23,8 @@ class Phone : public QObject
     Q_PROPERTY(QString id READ id CONSTANT)
     Q_PROPERTY(QString name READ name)
     Q_PROPERTY(bool reachable READ isReachable)
+    // Connected over Bluetooth for calls, and calls are on for this computer
+    Q_PROPERTY(bool callsConnected READ callsConnected)
 
 public:
     Phone(const QString &id, QObject *parent = nullptr);
@@ -31,6 +33,7 @@ public:
     QString id() const;
     QString name() const;
     bool isReachable() const;
+    bool callsConnected() const;
     /**
      * The phone's IP addresses, while KDE Connect reaches it over the network
      */

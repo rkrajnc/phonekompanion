@@ -26,7 +26,9 @@ public:
         PhoneIdRole = Qt::UserRole + 1,
         NameRole,
         ReachableRole,
+        CallsConnectedRole,
     };
+    Q_ENUM(Roles)
 
     explicit PhonesModel(QObject *parent = nullptr);
 
@@ -42,6 +44,10 @@ public:
      * The row of a phone, or -1
      */
     Q_INVOKABLE int indexOf(const QString &phoneId) const;
+    /**
+     * The row of the first phone connected for calls, else of the first phone, or -1
+     */
+    Q_INVOKABLE int rowForCalls() const;
     Q_INVOKABLE void startService();
     Q_INVOKABLE void openKdeConnect();
 
@@ -58,6 +64,7 @@ private:
         QString id;
         QString name;
         bool reachable = false;
+        bool callsConnected = false;
     };
 
     void setPhones(QList<Phone> phones, bool kdeConnectRunning);

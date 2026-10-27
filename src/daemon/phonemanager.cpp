@@ -103,6 +103,8 @@ void PhoneManager::refresh()
             phone = new Phone(id, this);
             phone->setScrcpy(new Scrcpy(phone, m_adb));
             phone->setCalls(new Calls(phone, m_bluetooth));
+            // For the phone's callsConnected
+            connect(phone->calls(), &Calls::gatewayConnectedChanged, this, &PhoneManager::phonesChanged);
             changed = true;
         }
         const bool wasReachable = phone->isReachable();

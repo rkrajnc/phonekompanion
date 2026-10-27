@@ -6,6 +6,8 @@
 
 #include "phone.h"
 
+#include "calls.h"
+
 #include <QDBusConnection>
 
 #include "dbusnames.h"
@@ -72,6 +74,11 @@ Scrcpy *Phone::scrcpy() const
 void Phone::setScrcpy(Scrcpy *scrcpy)
 {
     m_scrcpy = scrcpy;
+}
+
+bool Phone::callsConnected() const
+{
+    return m_calls && m_calls->gatewayConnected();
 }
 
 Calls *Phone::calls() const
