@@ -11,6 +11,7 @@
 #include <QTimer>
 
 class Adb;
+class Bluetooth;
 class KdeConnect;
 class Phone;
 
@@ -46,6 +47,7 @@ private:
 
     KdeConnect *m_kdeConnect;
     Adb *m_adb;
+    Bluetooth *m_bluetooth;
     QHash<QString, Phone *> m_phones;
     bool m_kdeConnectRunning = false;
     QTimer m_refreshTimer;

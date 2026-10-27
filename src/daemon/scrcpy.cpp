@@ -31,6 +31,7 @@
 #include "findexecutable.h"
 #include "phone.h"
 #include "phonekompaniond_debug.h"
+#include "settings.h"
 
 #include <algorithm>
 
@@ -168,7 +169,7 @@ QVariantMap Scrcpy::settings() const
 void Scrcpy::setSetting(const QString &key, const QDBusVariant &value)
 {
     QVariant converted = value.variant();
-    if (!defaultSettings().contains(key) || !converted.convert(defaultSettings().value(key).metaType())) {
+    if (!defaultSettings().contains(key) || !convertSetting(converted, defaultSettings().value(key))) {
         qCWarning(PHONEKOMPANIOND) << "Ignoring the setting" << key << value.variant();
         return;
     }

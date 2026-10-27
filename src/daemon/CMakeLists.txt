@@ -1,9 +1,26 @@
+find_package(PhoneNumber OPTIONAL_COMPONENTS PhoneNumber)
+set_package_properties(PhoneNumber PROPERTIES
+    TYPE OPTIONAL
+    PURPOSE "Matches caller numbers to contacts, also when written differently"
+)
+find_package(KF6PulseAudioQt)
+set_package_properties(KF6PulseAudioQt PROPERTIES
+    TYPE OPTIONAL
+    PURPOSE "Mutes this computer's microphone in calls"
+)
+set(HAVE_PHONENUMBER ${PhoneNumber_PhoneNumber_FOUND})
+set(HAVE_PULSEAUDIO ${KF6PulseAudioQt_FOUND})
+configure_file(config-phonekompaniond.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-phonekompaniond.h)
+
 add_executable(phonekompaniond
     main.cpp
     adb.cpp
+    bluetooth.cpp
+    calls.cpp
     kdeconnect.cpp
     phone.cpp
     phonemanager.cpp
+    phonenumbermatch.cpp
     runner.cpp
     scrcpy.cpp
     tray.cpp
@@ -28,8 +45,16 @@ target_link_libraries(phonekompaniond PRIVATE
     KF6::DBusAddons
     KF6::I18n
     KF6::Notifications
+    KF6::People
+    KF6::PeopleBackend
     KF6::StatusNotifierItem
 )
+if (HAVE_PHONENUMBER)
+    target_link_libraries(phonekompaniond PRIVATE PhoneNumber::PhoneNumber)
+endif()
+if (HAVE_PULSEAUDIO)
+    target_link_libraries(phonekompaniond PRIVATE KF6::PulseAudioQt)
+endif()
 
 install(TARGETS phonekompaniond ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
 

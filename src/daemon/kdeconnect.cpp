@@ -18,6 +18,7 @@
 #define KDECONNECT_PATH QStringLiteral("/modules/kdeconnect")
 #define KDECONNECT_DAEMON_INTERFACE QStringLiteral("org.kde.kdeconnect.daemon")
 #define KDECONNECT_DEVICE_INTERFACE QStringLiteral("org.kde.kdeconnect.device")
+#define KDECONNECT_TELEPHONY_INTERFACE QStringLiteral("org.kde.kdeconnect.device.telephony")
 
 // Keeps the tray and our own D-Bus API responsive if KDE Connect hangs
 constexpr int CallTimeout = 2000;
@@ -44,6 +45,18 @@ KdeConnect::KdeConnect(QObject *parent)
                                   QStringLiteral("linksChanged")}) {
         bus.connect(KDECONNECT_SERVICE, QString(), KDECONNECT_DEVICE_INTERFACE, signal, this, SIGNAL(devicesChanged()));
     }
+    bus.connect(KDECONNECT_SERVICE, QString(), KDECONNECT_TELEPHONY_INTERFACE, QStringLiteral("callReceived"), this, SLOT(telephonyCallReceived(QDBusMessage)));
+}
+
+void KdeConnect::telephonyCallReceived(const QDBusMessage &message)
+{
+    // From /modules/kdeconnect/devices/<id>/telephony
+    const QStringList path = message.path().split(QLatin1Char('/'));
+    const QVariantList arguments = message.arguments();
+    if (path.size() < 2 || arguments.size() < 3) {
+        return;
+    }
+    Q_EMIT callReceived(path.at(path.size() - 2), arguments.at(0).toString(), arguments.at(1).toString(), arguments.at(2).toString());
 }
 
 bool KdeConnect::isRunning() const

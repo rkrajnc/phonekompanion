@@ -74,4 +74,14 @@ void Phone::setScrcpy(Scrcpy *scrcpy)
     m_scrcpy = scrcpy;
 }
 
+Calls *Phone::calls() const
+{
+    return m_calls;
+}
+
+void Phone::setCalls(Calls *calls)
+{
+    m_calls = calls;
+}
+
 #include "moc_phone.cpp"

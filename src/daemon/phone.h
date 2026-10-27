@@ -10,6 +10,7 @@
 #include <QStringList>
 #include <QVariantMap>
 
+class Calls;
 class Scrcpy;
 
 /**
@@ -40,6 +41,11 @@ public:
      */
     Scrcpy *scrcpy() const;
     void setScrcpy(Scrcpy *scrcpy);
+    /**
+     * Bluetooth calls, set once by PhoneManager
+     */
+    Calls *calls() const;
+    void setCalls(Calls *calls);
 
     /**
      * Takes the KDE Connect device properties, returns whether a property on D-Bus changed
@@ -55,4 +61,5 @@ private:
     bool m_reachable = false;
     QStringList m_addresses;
     Scrcpy *m_scrcpy = nullptr;
+    Calls *m_calls = nullptr;
 };

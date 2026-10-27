@@ -11,6 +11,8 @@
 
 #include <optional>
 
+class QDBusMessage;
+
 /**
  * The KDE Connect daemon, over D-Bus
  */
@@ -36,6 +38,13 @@ Q_SIGNALS:
      * The daemon started or stopped, or a device was added, removed, paired or changed
      */
     void devicesChanged();
+    /**
+     * The telephony plugin's callReceived: event is "callReceived" while ringing or "missedCall"
+     */
+    void callReceived(const QString &deviceId, const QString &event, const QString &number, const QString &contactName);
+
+private Q_SLOTS:
+    void telephonyCallReceived(const QDBusMessage &message);
 
 private:
     bool m_running = false;

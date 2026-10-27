@@ -1,0 +1,2 @@
+#cmakedefine01 HAVE_PHONENUMBER
+#cmakedefine01 HAVE_PULSEAUDIO

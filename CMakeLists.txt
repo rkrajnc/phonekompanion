@@ -24,7 +24,7 @@ include(KDEClangFormat)
 include(KDEGitCommitHooks)
 
 find_package(Qt6 ${QT_MIN_VERSION} REQUIRED COMPONENTS Core DBus Gui Network Qml Quick Widgets)
-find_package(KF6 ${KF_MIN_VERSION} REQUIRED COMPONENTS Config CoreAddons DBusAddons I18n Notifications StatusNotifierItem WindowSystem)
+find_package(KF6 ${KF_MIN_VERSION} REQUIRED COMPONENTS Config CoreAddons DBusAddons I18n Notifications People StatusNotifierItem WindowSystem)
 
 ecm_find_qmlmodule(org.kde.kirigami REQUIRED)
 ecm_find_qmlmodule(org.kde.prison REQUIRED)

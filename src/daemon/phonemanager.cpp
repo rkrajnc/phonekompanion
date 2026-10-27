@@ -10,6 +10,8 @@
 #include <QSet>
 
 #include "adb.h"
+#include "bluetooth.h"
+#include "calls.h"
 #include "dbusnames.h"
 #include "kdeconnect.h"
 #include "phone.h"
@@ -20,12 +22,18 @@ PhoneManager::PhoneManager(QObject *parent)
     : QObject(parent)
     , m_kdeConnect(new KdeConnect(this))
     , m_adb(new Adb(this))
+    , m_bluetooth(new Bluetooth(this))
 {
     // KDE Connect sends several signals when a device connects; read the devices once
     m_refreshTimer.setSingleShot(true);
     m_refreshTimer.setInterval(100);
     connect(&m_refreshTimer, &QTimer::timeout, this, &PhoneManager::refresh);
     connect(m_kdeConnect, &KdeConnect::devicesChanged, &m_refreshTimer, qOverload<>(&QTimer::start));
+    connect(m_kdeConnect, &KdeConnect::callReceived, this, [this](const QString &id, const QString &event, const QString &number, const QString &contactName) {
+        if (Phone *phone = m_phones.value(id)) {
+            phone->calls()->telephonyCallReceived(event, number, contactName);
+        }
+    });
 
     QDBusConnection::sessionBus().registerObject(PHONEKOMPANION_PHONES_PATH, this, QDBusConnection::ExportScriptableContents);
     refresh();
@@ -94,6 +102,7 @@ void PhoneManager::refresh()
             qCDebug(PHONEKOMPANIOND) << "Phone added" << id;
             phone = new Phone(id, this);
             phone->setScrcpy(new Scrcpy(phone, m_adb));
+            phone->setCalls(new Calls(phone, m_bluetooth));
             changed = true;
         }
         const bool wasReachable = phone->isReachable();
@@ -113,6 +122,8 @@ void PhoneManager::refresh()
         it = m_phones.erase(it);
         changed = true;
     }
+
+    m_bluetooth->setPhoneCount(m_phones.size());
 
     // The tools may have been installed while no phone was connected
     if (connected) {

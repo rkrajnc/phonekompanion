@@ -15,3 +15,19 @@ Action=Popup
 Name=Phone webcam
 Comment=The phone camera is used as a webcam
 Action=Popup
+
+[Event/callReceived]
+Name=Incoming call
+Comment=A phone call, while it rings and while it lasts
+Action=Popup
+
+[Event/callRinging]
+Name=Ringtone
+Comment=A phone call is ringing
+Action=Sound
+Sound=phone-incoming-call
+
+[Event/missedCall]
+Name=Missed call
+Comment=A phone call was missed
+Action=Popup
