@@ -554,7 +554,7 @@ QString Scrcpy::startWebcam(const QString &facing)
             return;
         }
         const QString error = scrcpyError(lines);
-        showError(m_phone->name(), error.isEmpty() ? i18n("The phone webcam stopped unexpectedly.") : i18n("The phone webcam stopped: %1", error));
+        m_phone->notifyError(error.isEmpty() ? i18n("The phone webcam stopped unexpectedly.") : i18n("The phone webcam stopped: %1", error));
     });
     connect(m_webcam, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
         if (error == QProcess::FailedToStart) {
@@ -564,7 +564,7 @@ QString Scrcpy::startWebcam(const QString &facing)
                 m_webcamNotification->close();
             }
             Q_EMIT statusChanged();
-            showError(m_phone->name(), i18n("Could not start %1.", m_adb->scrcpy()));
+            m_phone->notifyError(i18n("Could not start %1.", m_adb->scrcpy()));
         }
     });
 
@@ -604,14 +604,14 @@ void Scrcpy::startWindow(const QString &key, const QString &title, const QString
             return;
         }
         const QString error = scrcpyError(lines);
-        showError(title, error.isEmpty() ? i18n("Stopped unexpectedly.") : i18n("Stopped: %1", error));
+        m_phone->notifyError(error.isEmpty() ? i18n("Stopped unexpectedly.") : i18n("Stopped: %1", error), title);
     });
     connect(process, &QProcess::errorOccurred, this, [this, key, title, process](QProcess::ProcessError error) {
         if (error == QProcess::FailedToStart) {
             qCWarning(PHONEKOMPANIOND) << "Could not start" << m_adb->scrcpy() << process->errorString();
             windowClosed(key);
             process->deleteLater();
-            showError(title, i18n("Could not start %1.", m_adb->scrcpy()));
+            m_phone->notifyError(i18n("Could not start %1.", m_adb->scrcpy()), title);
         }
     });
 
@@ -637,21 +637,6 @@ void Scrcpy::windowClosed(const QString &key)
     if (m_audioWindow == key) {
         m_audioWindow.clear();
     }
-}
-
-void Scrcpy::notifyError(const QString &error)
-{
-    if (!error.isEmpty()) {
-        showError(m_phone->name(), error);
-    }
-}
-
-void Scrcpy::showError(const QString &title, const QString &text)
-{
-    auto *notification = new KNotification(QStringLiteral("error"));
-    notification->setTitle(title);
-    notification->setText(text);
-    notification->sendEvent();
 }
 
 void Scrcpy::focusWindow(qint64 pid)

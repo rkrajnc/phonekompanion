@@ -34,14 +34,16 @@ Kirigami.ApplicationWindow {
     // Waits for the daemon's phones, e.g. right after the window started
     property var pendingPhone: null
 
-    // subpage is "apps", "dialer" or empty; without a phone id, the phone connected for calls
-    function openPhoneById(phoneId: string, subpage: string) {
+    // subpage is "apps", "dialer" or empty, number one for the dialer; without a phone id, the
+    // phone connected for calls
+    function openPhoneById(phoneId: string, subpage: string, number: string) {
         const row = phoneId ? phonesModel.indexOf(phoneId) : phonesModel.rowForCalls();
         if (row < 0) {
             // Dropped once KDE Connect's phones were read, as it is then not paired
             pendingPhone = phonesModel.loaded && phonesModel.kdeConnectRunning ? null : {
                 phoneId: phoneId,
-                subpage: subpage
+                subpage: subpage,
+                number: number
             };
             return;
         }
@@ -51,7 +53,7 @@ Kirigami.ApplicationWindow {
         if (subpage === "apps") {
             page.openApps();
         } else if (subpage === "dialer") {
-            page.openDialer();
+            page.openDialer().setNumber(number);
         }
     }
 
@@ -81,7 +83,7 @@ Kirigami.ApplicationWindow {
                 // Close the page of a phone that was unpaired, or of all phones when the service stops
                 onModelReset: {
                     if (root.pendingPhone && loaded) {
-                        root.openPhoneById(root.pendingPhone.phoneId, root.pendingPhone.subpage);
+                        root.openPhoneById(root.pendingPhone.phoneId, root.pendingPhone.subpage, root.pendingPhone.number);
                     }
                     const page = root.pageStack.get(1);
                     if (page && indexOf(page.phoneId) < 0) {

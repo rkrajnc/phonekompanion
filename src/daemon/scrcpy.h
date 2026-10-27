@@ -126,11 +126,6 @@ public:
      * The apps as from apps(), parsed
      */
     QJsonArray appList() const;
-    /**
-     * Shows an error of an action as a notification, for actions started without a window;
-     * nothing for an empty error
-     */
-    void notifyError(const QString &error);
 
 Q_SIGNALS:
     Q_SCRIPTABLE void statusChanged();
@@ -159,7 +154,6 @@ private:
     void windowClosed(const QString &key);
     QString launcherPath(const QString &package) const;
     QString writeLauncher(const QString &package);
-    void showError(const QString &title, const QString &text);
     void focusWindow(qint64 pid);
 
     Phone *m_phone;

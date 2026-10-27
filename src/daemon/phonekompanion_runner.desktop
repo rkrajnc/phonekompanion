@@ -3,7 +3,7 @@
 
 [Desktop Entry]
 Name=Phone Kompanion
-Comment=Open apps, the screen or the camera of your phone in windows on this computer
+Comment=Open apps, the screen or the camera of your phone in windows on this computer, and call contacts and numbers through it
 Type=Service
 Icon=smartphone
 X-KDE-PluginInfo-Author=Rok Krajnc
@@ -14,6 +14,6 @@ X-KDE-PluginInfo-EnabledByDefault=true
 X-Plasma-API=DBus
 X-Plasma-DBusRunner-Service=io.github.rkrajnc.phonekompaniond
 X-Plasma-DBusRunner-Path=/runner
-X-Plasma-Runner-Match-Regex=(?i)^phone\s
-X-Plasma-Runner-Syntaxes=phone :q:;phone screen;phone camera
-X-Plasma-Runner-Syntax-Descriptions=Opens the phone app :q: in a window;Shows the phone's screen in a window;Shows the phone's camera in a window
+X-Plasma-Runner-Match-Regex=(?i)^(phone|call)\s
+X-Plasma-Runner-Syntaxes=phone :q:;phone screen;phone camera;call :q:
+X-Plasma-Runner-Syntax-Descriptions=Opens the phone app :q: in a window;Shows the phone's screen in a window;Shows the phone's camera in a window;Calls the contact or phone number :q: from this computer

@@ -13,7 +13,7 @@
 class PhoneManager;
 
 /**
- * KRunner D-Bus runner at /runner: "phone <app>", "phone screen", "phone camera"
+ * KRunner D-Bus runner at /runner: "phone <app>", "phone screen", "phone camera", "call <name or number>"
  */
 class Runner : public QObject
 {
@@ -47,6 +47,8 @@ public Q_SLOTS:
     void Run(const QString &matchId, const QString &actionId);
 
 private:
+    RemoteMatches matchCall(const QString &numberOrName) const;
+
     PhoneManager *m_manager;
 };
 

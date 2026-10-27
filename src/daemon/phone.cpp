@@ -8,6 +8,7 @@
 
 #include "calls.h"
 
+#include <KNotification>
 #include <QDBusConnection>
 
 #include "dbusnames.h"
@@ -74,6 +75,17 @@ Scrcpy *Phone::scrcpy() const
 void Phone::setScrcpy(Scrcpy *scrcpy)
 {
     m_scrcpy = scrcpy;
+}
+
+void Phone::notifyError(const QString &error, const QString &title) const
+{
+    if (error.isEmpty()) {
+        return;
+    }
+    auto *notification = new KNotification(QStringLiteral("error"));
+    notification->setTitle(title.isEmpty() ? m_name : title);
+    notification->setText(error);
+    notification->sendEvent();
 }
 
 bool Phone::callsConnected() const

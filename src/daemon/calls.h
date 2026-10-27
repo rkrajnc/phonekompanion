@@ -61,6 +61,11 @@ public:
      * Returns an error message, or an empty string if the call was requested from the phone.
      */
     Q_SCRIPTABLE QString dial(const QString &numberOrName);
+    /**
+     * Calls a number as stored, e.g. a contact's, without taking it for a name. Returns an error
+     * message, or an empty string.
+     */
+    QString dialStoredNumber(const QString &number);
 
     /**
      * Contacts matching query as a JSON array of {name, number}, one entry per phone number
@@ -142,6 +147,10 @@ private:
     };
 
     QVariant setting(const QString &key) const;
+    /**
+     * Why no call can be made now, or an empty string
+     */
+    QString dialError() const;
     void phoneChanged();
     void bluetoothChanged();
     void useThisComputerChanged();

@@ -13,6 +13,7 @@
 #include <KLocalizedString>
 #include <KStatusNotifierItem>
 
+#include "calls.h"
 #include "findexecutable.h"
 #include "phone.h"
 #include "phonekompaniond_debug.h"
@@ -50,9 +51,14 @@ void Tray::update()
     bool connected = false;
     const QList<Phone *> phones = m_manager->allPhones();
     for (const Phone *phone : phones) {
-        lines << (phone->isReachable() ? i18nc("@info:tooltip phone name", "%1: connected", phone->name())
-                                       : i18nc("@info:tooltip phone name", "%1: not connected", phone->name()));
-        connected |= phone->isReachable();
+        if (phone->isReachable()) {
+            lines << i18nc("@info:tooltip phone name", "%1: connected", phone->name());
+        } else if (phone->callsConnected()) {
+            lines << i18nc("@info:tooltip phone name", "%1: connected over Bluetooth", phone->name());
+        } else {
+            lines << i18nc("@info:tooltip phone name", "%1: not connected", phone->name());
+        }
+        connected |= phone->isReachable() || phone->callsConnected();
     }
     if (!m_manager->isKdeConnectRunning()) {
         lines = {i18n("KDE Connect is not running")};
@@ -78,21 +84,64 @@ void Tray::updateMenu()
 
     const QList<Phone *> phones = m_manager->allPhones();
     for (Phone *phone : phones) {
-        Scrcpy *scrcpy = phone->scrcpy();
-        if (!phone->isReachable()) {
+        // Calls also work over Bluetooth alone, mirroring needs KDE Connect's network connection
+        if (!phone->isReachable() && !phone->callsConnected()) {
             continue;
         }
+        Scrcpy *scrcpy = phone->scrcpy();
+        Calls *calls = phone->calls();
 
-        const auto addAction = [this, menu, scrcpy](const QString &icon, const QString &text, const std::function<QString()> &run) {
+        const auto addAction = [this, menu, phone](const QString &icon, const QString &text, const std::function<QString()> &run) {
             auto action = new QAction(QIcon::fromTheme(icon), text, menu);
             menu->insertAction(m_phonesEnd, action);
-            connect(action, &QAction::triggered, scrcpy, [scrcpy, run] {
-                scrcpy->notifyError(run());
+            connect(action, &QAction::triggered, phone, [phone, run] {
+                phone->notifyError(run());
             });
             m_phoneActions.append(action);
             return action;
         };
         m_phoneActions.append(menu->insertSection(m_phonesEnd, phone->name()));
+
+        addAction(QStringLiteral("call-outgoing"), i18n("Phone Calls…"), [this, phone] {
+            openWindow({QStringLiteral("--phone"), phone->id(), QStringLiteral("--dialer")});
+            return QString();
+        });
+        QAction *answer = addAction(QStringLiteral("call-start"), QString(), [calls] {
+            calls->answer();
+            return QString();
+        });
+        QAction *hangUp = addAction(QStringLiteral("call-stop"), QString(), [calls] {
+            calls->hangUp();
+            return QString();
+        });
+        QAction *mute = addAction(QString(), QString(), [calls] {
+            calls->setMicrophoneMuted(!calls->microphoneMuted());
+            return QString();
+        });
+        const auto updateCall = [calls, answer, hangUp, mute] {
+            const QString state = calls->callState();
+            const bool ringing = state == QLatin1String("incoming") || state == QLatin1String("waiting");
+            // "&" would mark a shortcut in the menu
+            QString caller = calls->callName().isEmpty() ? calls->callNumber() : calls->callName();
+            caller = caller.isEmpty() ? i18n("unknown number") : caller.replace(QLatin1Char('&'), QStringLiteral("&&"));
+            answer->setVisible(ringing);
+            answer->setText(i18nc("@action:inmenu %1 is a contact name or phone number", "Answer Call from %1", caller));
+            hangUp->setVisible(!state.isEmpty());
+            hangUp->setText(ringing ? i18n("Decline Call") : i18nc("@action:inmenu %1 is a contact name or phone number", "Hang Up Call with %1", caller));
+            mute->setVisible(state == QLatin1String("active") && calls->audioOnPc() && calls->microphoneMuteSupported());
+            mute->setIcon(
+                QIcon::fromTheme(calls->microphoneMuted() ? QStringLiteral("microphone-sensitivity-muted") : QStringLiteral("microphone-sensitivity-high")));
+            mute->setText(calls->microphoneMuted() ? i18n("Unmute Microphone") : i18n("Mute Microphone"));
+        };
+        updateCall();
+        // Only these entries change with the call; the menu is rebuilt when the phones change
+        connect(calls, &Calls::callChanged, answer, updateCall);
+        // For microphoneMuteSupported
+        connect(calls, &Calls::statusChanged, answer, updateCall);
+
+        if (!phone->isReachable()) {
+            continue;
+        }
         addAction(QStringLiteral("video-display"), i18n("Mirror Screen"), [scrcpy] {
             return scrcpy->mirrorScreen();
         });
@@ -114,7 +163,6 @@ void Tray::updateMenu()
             webcam->setText(scrcpy->webcamActive() ? i18n("Stop Webcam") : i18n("Use Camera as Webcam"));
         };
         updateWebcam();
-        // Only the text changes with the status; the menu is rebuilt when the phones change
         connect(scrcpy, &Scrcpy::statusChanged, webcam, updateWebcam);
     }
 }

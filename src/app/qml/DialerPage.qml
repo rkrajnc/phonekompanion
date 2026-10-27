@@ -30,6 +30,19 @@ Kirigami.ScrollablePage {
 
     title: i18n("Phone Calls")
 
+    // From a tel: link: shown to call, not called at once; during a call, ready for after it
+    function setNumber(number: string) {
+        if (!number) {
+            return;
+        }
+        query.text = number;
+        if (inCall) {
+            applicationWindow().showPassiveNotification(i18n("%1 is ready to call when this call ends", number));
+        } else {
+            query.forceActiveFocus();
+        }
+    }
+
     function pressKey(key: string) {
         if (inCall) {
             calls.sendTones(key);

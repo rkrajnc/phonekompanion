@@ -794,12 +794,8 @@ QString Calls::dial(const QString &numberOrName)
     const QString query = numberOrName.trimmed();
     if (query.isEmpty()) {
         return i18n("No phone number or contact given");
-    } else if (!m_useThisComputer) {
-        return i18n("Calls are turned off for this computer in the Bluetooth calls settings");
-    } else if (!gatewayConnected()) {
-        return i18n("%1 is not connected over Bluetooth", m_phone->name());
-    } else if (!m_calls.isEmpty()) {
-        return i18n("Already in a call");
+    } else if (const QString error = dialError(); !error.isEmpty()) {
+        return error;
     }
 
     if (isPhoneNumber(query)) {
@@ -832,6 +828,27 @@ QString Calls::dial(const QString &numberOrName)
         return i18n("%1 has several phone numbers: %2", contact.name, contact.numbers.join(QStringLiteral(", ")));
     }
     dialNumber(contact.numbers.constFirst());
+    return QString();
+}
+
+QString Calls::dialStoredNumber(const QString &number)
+{
+    if (const QString error = dialError(); !error.isEmpty()) {
+        return error;
+    }
+    dialNumber(number);
+    return QString();
+}
+
+QString Calls::dialError() const
+{
+    if (!m_useThisComputer) {
+        return i18n("Calls are turned off for this computer in the call settings");
+    } else if (!gatewayConnected()) {
+        return i18n("%1 is not connected over Bluetooth", m_phone->name());
+    } else if (!m_calls.isEmpty()) {
+        return i18n("Already in a call");
+    }
     return QString();
 }
 
@@ -887,9 +904,10 @@ void Calls::dialNumber(const QString &number)
     if (!gatewayConnected() || !m_calls.isEmpty()) {
         return;
     }
-    // ATD takes the number as is, so drop the formatting
+    // ATD takes the number as is, so drop an extension or pause ("x12", "ext. 3", ",", ";", "p", "w") and the formatting
+    static const QRegularExpression extension(QStringLiteral("[A-Za-z,;]"));
     static const QRegularExpression formatting(QStringLiteral("[^0-9+*#]"));
-    QString digits = number;
+    QString digits = number.section(extension, 0, 0);
     digits.remove(formatting);
 
     setRejectSco(false);
@@ -903,10 +921,7 @@ void Calls::dialNumber(const QString &number)
             if (m_calls.isEmpty()) {
                 setRejectSco(true);
             }
-            auto *notification = new KNotification(QStringLiteral("error"));
-            notification->setTitle(m_phone->name());
-            notification->setText(i18n("Couldn't call %1", number));
-            notification->sendEvent();
+            m_phone->notifyError(i18n("Couldn't call %1", number));
         }
     });
 }

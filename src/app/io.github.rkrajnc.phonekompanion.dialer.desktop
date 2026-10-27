@@ -5,9 +5,12 @@
 Name=Phone Dialer
 GenericName=Phone Calls
 Comment=Call contacts and phone numbers through your phone
-Exec=phonekompanion --dialer
+Exec=phonekompanion --dialer %u
 Icon=call-start
 Type=Application
 Terminal=false
 Categories=Qt;KDE;Network;Telephony;
+MimeType=x-scheme-handler/tel;
+# Before KDE Connect's own handler, which also takes tel: links
+InitialPreference=10
 StartupWMClass=phonekompanion

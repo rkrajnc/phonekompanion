@@ -13,6 +13,7 @@
 #include <QJsonArray>
 #include <QJsonObject>
 
+#include "calls.h"
 #include "phone.h"
 #include "phonekompaniond_debug.h"
 #include "phonemanager.h"
@@ -82,9 +83,37 @@ RemoteActions Runner::Actions()
     return {};
 }
 
+namespace
+{
+// Match ids are "<phone id>\n<kind>\n<argument>", with kind screen, camera, app (argument the
+// package) or call (argument the number); with several phones, the phone's name is in the subtext
+RemoteMatch makeMatch(const Phone *phone, int phoneCount, const QString &kind, const QString &argument, const QString &text, double relevance, int category)
+{
+    RemoteMatch match;
+    match.id = phone->id() + QLatin1Char('\n') + kind + QLatin1Char('\n') + argument;
+    match.text = text;
+    match.categoryRelevance = category;
+    match.relevance = relevance;
+    if (kind == QLatin1String("call")) {
+        match.iconName = QStringLiteral("call-start");
+        match.properties.insert(QStringLiteral("subtext"), phoneCount > 1 ? i18n("%1 via %2", argument, phone->name()) : argument);
+    } else {
+        match.iconName = kind == QLatin1String("camera") ? QStringLiteral("camera-photo") : QStringLiteral("smartphone");
+        if (phoneCount > 1) {
+            match.properties.insert(QStringLiteral("subtext"), phone->name());
+        }
+    }
+    return match;
+}
+}
+
 RemoteMatches Runner::Match(const QString &query)
 {
-    // The keyword is English only, as KRunner filters queries with the regex in the runner's .desktop file
+    // The keywords are English only, as KRunner filters queries with the regex in the runner's .desktop file
+    const QString callKeyword = QStringLiteral("call ");
+    if (query.startsWith(callKeyword, Qt::CaseInsensitive)) {
+        return matchCall(query.mid(callKeyword.size()).trimmed());
+    }
     const QString keyword = QStringLiteral("phone ");
     if (!query.startsWith(keyword, Qt::CaseInsensitive)) {
         return {};
@@ -100,18 +129,8 @@ RemoteMatches Runner::Match(const QString &query)
     });
 
     RemoteMatches matches;
-    // Match ids are "<phone id>\n<screen|camera|app>\n<package>"
     const auto addMatch = [&phones, &matches](Phone *phone, const QString &kind, const QString &package, const QString &text, double relevance, int category) {
-        RemoteMatch match;
-        match.id = phone->id() + QLatin1Char('\n') + kind + QLatin1Char('\n') + package;
-        match.text = text;
-        match.iconName = kind == QLatin1String("camera") ? QStringLiteral("camera-photo") : QStringLiteral("smartphone");
-        match.categoryRelevance = category;
-        match.relevance = relevance;
-        if (phones.size() > 1) {
-            match.properties.insert(QStringLiteral("subtext"), phone->name());
-        }
-        matches.append(match);
+        matches.append(makeMatch(phone, phones.size(), kind, package, text, relevance, category));
     };
 
     for (Phone *phone : std::as_const(phones)) {
@@ -151,24 +170,59 @@ RemoteMatches Runner::Match(const QString &query)
     return matches;
 }
 
+RemoteMatches Runner::matchCall(const QString &numberOrName) const
+{
+    if (numberOrName.isEmpty()) {
+        return {};
+    }
+    QList<Phone *> phones = m_manager->allPhones();
+    phones.removeIf([](const Phone *phone) {
+        return !phone->callsConnected();
+    });
+
+    RemoteMatches matches;
+    const auto addMatch = [&matches, &phones](const Phone *phone, const QString &text, const QString &number) {
+        matches.append(makeMatch(phone, phones.size(), QStringLiteral("call"), number, text, 1, 100));
+    };
+
+    const bool isNumber = Calls::isPhoneNumber(numberOrName);
+    for (const Phone *phone : std::as_const(phones)) {
+        if (isNumber) {
+            addMatch(phone, i18n("Call %1", numberOrName), numberOrName);
+            continue;
+        }
+        const QList<Calls::Contact> contacts = phone->calls()->findContacts(numberOrName, 10);
+        for (const Calls::Contact &contact : contacts) {
+            for (const QString &number : contact.numbers) {
+                addMatch(phone, i18n("Call %1", contact.name), number);
+            }
+        }
+    }
+    return matches;
+}
+
 void Runner::Run(const QString &matchId, const QString &actionId)
 {
     Q_UNUSED(actionId);
     const QString phoneId = matchId.section(QLatin1Char('\n'), 0, 0);
     const QString kind = matchId.section(QLatin1Char('\n'), 1, 1);
-    const QString package = matchId.section(QLatin1Char('\n'), 2);
+    // The package of an app, the number of a call
+    const QString argument = matchId.section(QLatin1Char('\n'), 2);
     const QList<Phone *> phones = m_manager->allPhones();
     for (Phone *phone : phones) {
         if (phone->id() != phoneId) {
             continue;
         }
         Scrcpy *scrcpy = phone->scrcpy();
-        if (kind == QLatin1String("screen")) {
-            scrcpy->notifyError(scrcpy->mirrorScreen());
+        if (kind == QLatin1String("call")) {
+            // A typed number or a contact's, so not taken for a name
+            phone->notifyError(phone->calls()->dialStoredNumber(argument));
+        } else if (kind == QLatin1String("screen")) {
+            phone->notifyError(scrcpy->mirrorScreen());
         } else if (kind == QLatin1String("camera")) {
-            scrcpy->notifyError(scrcpy->showCamera(QString()));
+            phone->notifyError(scrcpy->showCamera(QString()));
         } else {
-            scrcpy->notifyError(scrcpy->openApp(package));
+            phone->notifyError(scrcpy->openApp(argument));
         }
         return;
     }

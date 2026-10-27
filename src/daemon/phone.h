@@ -40,6 +40,11 @@ public:
     QStringList addresses() const;
     QString dbusPath() const;
     /**
+     * Shows an error as a notification, titled with the phone's name or title; nothing for an
+     * empty error
+     */
+    void notifyError(const QString &error, const QString &title = QString()) const;
+    /**
      * Mirroring, set once by PhoneManager
      */
     Scrcpy *scrcpy() const;

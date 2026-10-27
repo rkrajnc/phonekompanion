@@ -31,6 +31,7 @@ struct PhoneInfo {
     QString id;
     QString name;
     bool reachable = false;
+    bool callsConnected = false;
 };
 
 QString phonePath(const QString &id)
@@ -91,15 +92,16 @@ std::optional<QList<PhoneInfo>> phones()
     const QStringList ids = manager.property("phones").toStringList();
     for (const QString &id : ids) {
         QDBusInterface phone(PHONEKOMPANION_SERVICE, phonePath(id), PHONEKOMPANION_PHONE_INTERFACE);
-        phones.append({id, phone.property("name").toString(), phone.property("reachable").toBool()});
+        phones.append({id, phone.property("name").toString(), phone.property("reachable").toBool(), phone.property("callsConnected").toBool()});
     }
     return phones;
 }
 
 /**
- * The phone given by id or name, else the only phone, or the only connected one
+ * The phone given by id or name, else the only phone, or the only connected one: for calls the
+ * one connected over Bluetooth, else the one KDE Connect reaches
  */
-std::optional<PhoneInfo> choosePhone(const QList<PhoneInfo> &phones, const QString &wanted)
+std::optional<PhoneInfo> choosePhone(const QList<PhoneInfo> &phones, const QString &wanted, bool forCalls)
 {
     if (!wanted.isEmpty()) {
         for (const PhoneInfo &phone : phones) {
@@ -114,13 +116,19 @@ std::optional<PhoneInfo> choosePhone(const QList<PhoneInfo> &phones, const QStri
         return phones.constFirst();
     }
     QList<PhoneInfo> connected;
-    std::copy_if(phones.cbegin(), phones.cend(), std::back_inserter(connected), [](const PhoneInfo &phone) {
-        return phone.reachable;
+    std::copy_if(phones.cbegin(), phones.cend(), std::back_inserter(connected), [forCalls](const PhoneInfo &phone) {
+        return forCalls ? phone.callsConnected : phone.reachable;
     });
     if (connected.size() == 1) {
         return connected.constFirst();
     }
-    fail(i18n("Phone Kompanion"), phones.isEmpty() ? i18n("No phones are paired in KDE Connect.") : i18n("Choose a phone with --phone. See --list-phones."));
+    if (phones.isEmpty()) {
+        fail(i18n("Phone Kompanion"), i18n("No phones are paired in KDE Connect."));
+    } else if (forCalls && connected.isEmpty()) {
+        fail(i18n("Phone Kompanion"), i18n("No phone is connected over Bluetooth for calls."));
+    } else {
+        fail(i18n("Phone Kompanion"), i18n("Choose a phone with --phone. See --list-phones."));
+    }
     return std::nullopt;
 }
 
@@ -144,6 +152,7 @@ int main(int argc, char *argv[])
     const QCommandLineOption phoneOption({QStringLiteral("p"), QStringLiteral("phone")},
                                          i18n("The phone to use, by id or name; needed when more than one phone is connected"),
                                          i18n("phone"));
+    const QCommandLineOption call(QStringLiteral("call"), i18n("Call a phone number or contact from this computer, through the phone"), i18n("number or name"));
     const QCommandLineOption mirror(QStringLiteral("mirror"), i18n("Show the phone's screen in a window"));
     const QCommandLineOption listApps(QStringLiteral("list-apps"), i18n("List the phone's apps and their package names"));
     const QCommandLineOption openApp(QStringLiteral("open-app"), i18n("Open an app of the phone in a window"), i18n("package"));
@@ -154,7 +163,7 @@ int main(int argc, char *argv[])
                                           i18n("Use this camera for --camera or --webcam, instead of the one in the settings"),
                                           QStringLiteral("back|front"));
     const QCommandLineOption notifyOption(QStringLiteral("notify"), i18n("Also show errors as a desktop notification"));
-    parser.addOptions({listPhones, phoneOption, mirror, listApps, openApp, camera, webcam, stopWebcam, cameraFacing, notifyOption});
+    parser.addOptions({listPhones, phoneOption, call, mirror, listApps, openApp, camera, webcam, stopWebcam, cameraFacing, notifyOption});
     aboutData.setupCommandLine(&parser);
     parser.process(app);
     aboutData.processCommandLine(&parser);
@@ -173,16 +182,27 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    const bool action =
-        parser.isSet(mirror) || parser.isSet(listApps) || parser.isSet(openApp) || parser.isSet(camera) || parser.isSet(webcam) || parser.isSet(stopWebcam);
+    const bool action = parser.isSet(call) || parser.isSet(mirror) || parser.isSet(listApps) || parser.isSet(openApp) || parser.isSet(camera)
+        || parser.isSet(webcam) || parser.isSet(stopWebcam);
     if (!action) {
         parser.showHelp(1);
     }
 
-    const std::optional<PhoneInfo> phone = choosePhone(*allPhones, parser.value(phoneOption));
+    const std::optional<PhoneInfo> phone = choosePhone(*allPhones, parser.value(phoneOption), parser.isSet(call));
     if (!phone) {
         return 1;
     }
+    if (parser.isSet(call)) {
+        QDBusInterface calls(PHONEKOMPANION_SERVICE, phonePath(phone->id) + QStringLiteral("/calls"), PHONEKOMPANION_CALLS_INTERFACE);
+        const QDBusMessage reply = calls.call(QStringLiteral("dial"), parser.value(call));
+        const QString error = reply.type() == QDBusMessage::ErrorMessage ? reply.errorMessage() : reply.arguments().value(0).toString();
+        if (!error.isEmpty()) {
+            fail(phone->name, error);
+            return 1;
+        }
+        return 0;
+    }
+
     QDBusInterface scrcpy(PHONEKOMPANION_SERVICE, phonePath(phone->id) + QStringLiteral("/scrcpy"), PHONEKOMPANION_SCRCPY_INTERFACE);
 
     if (parser.isSet(listApps)) {
