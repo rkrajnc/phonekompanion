@@ -5,6 +5,7 @@
 Type=Application
 Name=Phone Kompanion
 Comment=Background service of Phone Kompanion
-Exec=phonekompaniond
+# A full path, as systemd's autostart generator does not search the session's PATH, e.g. ~/.local/bin
+Exec=@KDE_INSTALL_FULL_BINDIR@/phonekompaniond
 Icon=smartphone
 NoDisplay=true
