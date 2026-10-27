@@ -35,6 +35,8 @@ class Scrcpy : public QObject
     Q_PROPERTY(QString webcamDevice READ webcamDevice)
     Q_PROPERTY(QString webcamName READ webcamName)
     Q_PROPERTY(bool webcamActive READ webcamActive)
+    // Why mirroring cannot start, empty when it can
+    Q_PROPERTY(QString unavailableReason READ unavailableReason)
 
 public:
     Scrcpy(Phone *phone, Adb *adb);
@@ -47,6 +49,7 @@ public:
     QString webcamDevice() const;
     QString webcamName() const;
     bool webcamActive() const;
+    QString unavailableReason() const;
 
     /**
      * The settings, with their defaults where not set: adbSerial, keyboard ("uhid" or empty),
@@ -122,7 +125,6 @@ private:
     QString cameraFacing(const QString &facing) const;
     QStringList cameraArguments(const QString &facing) const;
     void matchDevice(bool devicesChanged = false);
-    QString unavailableReason() const;
     void runPair(const QString &address, const QString &code, const QString &retryMessage);
     void pollQrPairing();
     void endQrPairing();

@@ -27,6 +27,7 @@ find_package(Qt6 ${QT_MIN_VERSION} REQUIRED COMPONENTS Core DBus Gui Network Qml
 find_package(KF6 ${KF_MIN_VERSION} REQUIRED COMPONENTS Config CoreAddons DBusAddons I18n Notifications StatusNotifierItem WindowSystem)
 
 ecm_find_qmlmodule(org.kde.kirigami REQUIRED)
+ecm_find_qmlmodule(org.kde.prison REQUIRED)
 
 ecm_setup_version(PROJECT
     VARIABLE_PREFIX PHONEKOMPANION

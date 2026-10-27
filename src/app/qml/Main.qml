@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
  */
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import org.kde.kirigami as Kirigami
 import org.kde.kirigami.delegates as KD
@@ -16,6 +18,24 @@ Kirigami.ApplicationWindow {
     minimumWidth: Kirigami.Units.gridUnit * 20
     minimumHeight: Kirigami.Units.gridUnit * 20
 
+    function openPhone(phoneId: string, phoneName: string): PhonePage {
+        // Keeps its apps or settings page, e.g. while a QR code is shown
+        const page = pageStack.get(1);
+        if (page?.phoneId === phoneId) {
+            return page;
+        }
+        pageStack.pop(pageStack.initialPage);
+        return pageStack.push(phonePage, {
+            phoneId: phoneId,
+            phoneName: phoneName
+        });
+    }
+
+    Component {
+        id: phonePage
+        PhonePage {}
+    }
+
     pageStack.initialPage: Kirigami.ScrollablePage {
         title: i18n("Phones")
 
@@ -24,9 +44,17 @@ Kirigami.ApplicationWindow {
 
             model: PhonesModel {
                 id: phonesModel
+                // Close the page of a phone that was unpaired, or of all phones when the service stops
+                onModelReset: {
+                    const page = root.pageStack.get(1);
+                    if (page && indexOf(page.phoneId) < 0) {
+                        root.pageStack.pop(root.pageStack.initialPage);
+                    }
+                }
             }
 
             delegate: KD.SubtitleDelegate {
+                required property string phoneId
                 required property string name
                 required property bool reachable
 
@@ -34,6 +62,8 @@ Kirigami.ApplicationWindow {
                 icon.name: "smartphone"
                 text: name
                 subtitle: reachable ? i18n("Connected") : i18n("Not connected")
+                highlighted: root.pageStack.get(1)?.phoneId === phoneId
+                onClicked: root.openPhone(phoneId, name)
             }
 
             Kirigami.PlaceholderMessage {

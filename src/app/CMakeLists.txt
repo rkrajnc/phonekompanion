@@ -1,12 +1,16 @@
 add_executable(phonekompanion
     main.cpp
     phonesmodel.cpp
+    scrcpyinterface.cpp
 )
 
 ecm_add_qml_module(phonekompanion URI io.github.rkrajnc.phonekompanion)
 
 ecm_target_qml_sources(phonekompanion SOURCES
     qml/Main.qml
+    qml/PhonePage.qml
+    qml/AppsPage.qml
+    qml/ScrcpySettingsPage.qml
 )
 
 target_include_directories(phonekompanion PRIVATE ${CMAKE_SOURCE_DIR}/src)

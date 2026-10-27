@@ -15,8 +15,10 @@
 #include <QProcess>
 #include <QStandardPaths>
 
+#include <algorithm>
 #include <memory>
 
+#include "dbuscall.h"
 #include "dbusnames.h"
 
 PhonesModel::PhonesModel(QObject *parent)
@@ -83,6 +85,14 @@ bool PhonesModel::isKdeConnectRunning() const
     return m_kdeConnectRunning;
 }
 
+int PhonesModel::indexOf(const QString &phoneId) const
+{
+    const auto it = std::find_if(m_phones.cbegin(), m_phones.cend(), [&phoneId](const Phone &phone) {
+        return phone.id == phoneId;
+    });
+    return it == m_phones.cend() ? -1 : it - m_phones.cbegin();
+}
+
 void PhonesModel::startService()
 {
     // Next to this program first, so a build that is not installed starts its own daemon
@@ -100,14 +110,6 @@ void PhonesModel::openKdeConnect()
     if (!QProcess::startDetached(QStringLiteral("kdeconnect-app"), {})) {
         qWarning() << "Could not start kdeconnect-app";
     }
-}
-
-static QDBusPendingCall getAllProperties(const QString &path, const QString &interface)
-{
-    QDBusMessage message =
-        QDBusMessage::createMethodCall(PHONEKOMPANION_SERVICE, path, QStringLiteral("org.freedesktop.DBus.Properties"), QStringLiteral("GetAll"));
-    message << interface;
-    return QDBusConnection::sessionBus().asyncCall(message);
 }
 
 void PhonesModel::refresh()

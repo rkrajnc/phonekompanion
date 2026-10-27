@@ -363,7 +363,10 @@ void Scrcpy::pollQrPairing()
 QString Scrcpy::unavailableReason() const
 {
     if (!m_adb->missingTools().isEmpty()) {
-        return i18n("Not installed: %1", m_adb->missingTools().join(QStringLiteral(", ")));
+        return i18n(
+            "Not installed: %1. Install scrcpy and adb (android-tools). Some distributions install scrcpy-server separately, on openSUSE with \"sudo "
+            "scrcpy-update-server\".",
+            m_adb->missingTools().join(QStringLiteral(", ")));
     } else if (!m_networkReachable) {
         return i18n("%1 is not on the same network as this computer.", m_phone->name());
     } else if (m_adbSerial.isEmpty()) {

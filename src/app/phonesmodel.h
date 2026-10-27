@@ -35,6 +35,10 @@ public:
     bool isServiceRunning() const;
     bool isKdeConnectRunning() const;
 
+    /**
+     * The row of a phone, or -1
+     */
+    Q_INVOKABLE int indexOf(const QString &phoneId) const;
     Q_INVOKABLE void startService();
     Q_INVOKABLE void openKdeConnect();
 
