@@ -6,20 +6,19 @@
 
 #include "phonesmodel.h"
 
-#include <QCoreApplication>
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
 #include <QDBusPendingCallWatcher>
 #include <QDBusPendingReply>
 #include <QDBusServiceWatcher>
 #include <QProcess>
-#include <QStandardPaths>
 
 #include <algorithm>
 #include <memory>
 
 #include "dbuscall.h"
 #include "dbusnames.h"
+#include "findexecutable.h"
 
 PhonesModel::PhonesModel(QObject *parent)
     : QAbstractListModel(parent)
@@ -85,6 +84,11 @@ bool PhonesModel::isKdeConnectRunning() const
     return m_kdeConnectRunning;
 }
 
+bool PhonesModel::isLoaded() const
+{
+    return m_loaded;
+}
+
 int PhonesModel::indexOf(const QString &phoneId) const
 {
     const auto it = std::find_if(m_phones.cbegin(), m_phones.cend(), [&phoneId](const Phone &phone) {
@@ -95,11 +99,7 @@ int PhonesModel::indexOf(const QString &phoneId) const
 
 void PhonesModel::startService()
 {
-    // Next to this program first, so a build that is not installed starts its own daemon
-    QString daemon = QStandardPaths::findExecutable(QStringLiteral("phonekompaniond"), {QCoreApplication::applicationDirPath()});
-    if (daemon.isEmpty()) {
-        daemon = QStandardPaths::findExecutable(QStringLiteral("phonekompaniond"));
-    }
+    const QString daemon = findOwnExecutable(QStringLiteral("phonekompaniond"));
     if (daemon.isEmpty() || !QProcess::startDetached(daemon, {})) {
         qWarning() << "Could not start phonekompaniond" << daemon;
     }
@@ -164,9 +164,17 @@ void PhonesModel::setPhones(QList<Phone> phones, bool kdeConnectRunning)
         return a.name.localeAwareCompare(b.name) < 0;
     });
 
+    // Before the reset, for its handlers
+    const bool wasLoaded = m_loaded;
+    m_loaded = m_serviceRunning;
+
     beginResetModel();
     m_phones = phones;
     endResetModel();
+
+    if (m_loaded != wasLoaded) {
+        Q_EMIT loadedChanged();
+    }
 
     if (m_kdeConnectRunning != kdeConnectRunning) {
         m_kdeConnectRunning = kdeConnectRunning;

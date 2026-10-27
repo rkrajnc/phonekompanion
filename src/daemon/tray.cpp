@@ -6,17 +6,20 @@
 
 #include "tray.h"
 
-#include <QCoreApplication>
+#include <QAction>
 #include <QMenu>
 #include <QProcess>
-#include <QStandardPaths>
 
 #include <KLocalizedString>
 #include <KStatusNotifierItem>
 
+#include "findexecutable.h"
 #include "phone.h"
 #include "phonekompaniond_debug.h"
 #include "phonemanager.h"
+#include "scrcpy.h"
+
+#include <functional>
 
 Tray::Tray(PhoneManager *manager, QObject *parent)
     : QObject(parent)
@@ -28,8 +31,14 @@ Tray::Tray(PhoneManager *manager, QObject *parent)
     m_item->setTitle(i18n("Phone Kompanion"));
 
     QAction *open = m_item->contextMenu()->addAction(QIcon::fromTheme(QStringLiteral("window")), i18n("Open Phone Kompanion"));
-    connect(open, &QAction::triggered, this, &Tray::openWindow);
-    connect(m_item, &KStatusNotifierItem::activateRequested, this, &Tray::openWindow);
+    connect(open, &QAction::triggered, this, [this] {
+        openWindow();
+    });
+    // The phones' actions go before this, so they stay above Quit
+    m_phonesEnd = m_item->contextMenu()->addSeparator();
+    connect(m_item, &KStatusNotifierItem::activateRequested, this, [this] {
+        openWindow();
+    });
 
     connect(m_manager, &PhoneManager::phonesChanged, this, &Tray::update);
     update();
@@ -54,18 +63,69 @@ void Tray::update()
     m_item->setToolTip(QStringLiteral("smartphone"), i18n("Phone Kompanion"), lines.join(QLatin1Char('\n')));
     // Passive moves the icon into the tray's hidden items
     m_item->setStatus(connected ? KStatusNotifierItem::Active : KStatusNotifierItem::Passive);
+    updateMenu();
 }
 
-void Tray::openWindow()
+void Tray::updateMenu()
 {
-    // Next to this program first, so a build that is not installed opens its own window
-    QString app = QStandardPaths::findExecutable(QStringLiteral("phonekompanion"), {QCoreApplication::applicationDirPath()});
-    if (app.isEmpty()) {
-        app = QStandardPaths::findExecutable(QStringLiteral("phonekompanion"));
+    // Deleted later, as this may run while one of the actions is triggered
+    QMenu *menu = m_item->contextMenu();
+    for (QAction *action : std::as_const(m_phoneActions)) {
+        menu->removeAction(action);
+        action->deleteLater();
     }
+    m_phoneActions.clear();
+
+    const QList<Phone *> phones = m_manager->allPhones();
+    for (Phone *phone : phones) {
+        Scrcpy *scrcpy = phone->scrcpy();
+        if (!phone->isReachable()) {
+            continue;
+        }
+
+        const auto addAction = [this, menu, scrcpy](const QString &icon, const QString &text, const std::function<QString()> &run) {
+            auto action = new QAction(QIcon::fromTheme(icon), text, menu);
+            menu->insertAction(m_phonesEnd, action);
+            connect(action, &QAction::triggered, scrcpy, [scrcpy, run] {
+                scrcpy->notifyError(run());
+            });
+            m_phoneActions.append(action);
+            return action;
+        };
+        m_phoneActions.append(menu->insertSection(m_phonesEnd, phone->name()));
+        addAction(QStringLiteral("video-display"), i18n("Mirror Screen"), [scrcpy] {
+            return scrcpy->mirrorScreen();
+        });
+        addAction(QStringLiteral("view-app-grid"), i18n("Open App…"), [this, phone] {
+            openWindow({QStringLiteral("--phone"), phone->id(), QStringLiteral("--apps")});
+            return QString();
+        });
+        addAction(QStringLiteral("camera-photo"), i18n("Show Camera"), [scrcpy] {
+            return scrcpy->showCamera(QString());
+        });
+        QAction *webcam = addAction(QStringLiteral("camera-web"), QString(), [scrcpy] {
+            if (scrcpy->webcamActive()) {
+                scrcpy->stopWebcam();
+                return QString();
+            }
+            return scrcpy->startWebcam(QString());
+        });
+        const auto updateWebcam = [webcam, scrcpy] {
+            webcam->setText(scrcpy->webcamActive() ? i18n("Stop Webcam") : i18n("Use Camera as Webcam"));
+        };
+        updateWebcam();
+        // Only the text changes with the status; the menu is rebuilt when the phones change
+        connect(scrcpy, &Scrcpy::statusChanged, webcam, updateWebcam);
+    }
+}
+
+void Tray::openWindow(const QStringList &arguments)
+{
+    const QString app = findOwnExecutable(QStringLiteral("phonekompanion"));
 
     QProcess process;
     process.setProgram(app);
+    process.setArguments(arguments);
     // Lets the window take focus on Wayland; there is no token when opened from the menu
     if (const QString token = m_item->providedToken(); !token.isEmpty()) {
         QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();

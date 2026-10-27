@@ -93,7 +93,7 @@ void PhoneManager::refresh()
         if (!phone) {
             qCDebug(PHONEKOMPANIOND) << "Phone added" << id;
             phone = new Phone(id, this);
-            new Scrcpy(phone, m_adb);
+            phone->setScrcpy(new Scrcpy(phone, m_adb));
             changed = true;
         }
         const bool wasReachable = phone->isReachable();
@@ -107,6 +107,8 @@ void PhoneManager::refresh()
             continue;
         }
         qCDebug(PHONEKOMPANIOND) << "Phone removed" << it.key();
+        // Unpaired, so its launchers would only fail
+        it.value()->scrcpy()->removeLaunchers();
         delete it.value();
         it = m_phones.erase(it);
         changed = true;

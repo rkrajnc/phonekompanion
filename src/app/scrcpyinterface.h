@@ -41,6 +41,8 @@ class ScrcpyInterface : public QObject
     Q_PROPERTY(bool refreshingApps READ isRefreshingApps NOTIFY appsChanged)
     // Why refreshApps() could not read the apps
     Q_PROPERTY(QString appsError READ appsError NOTIFY appsChanged)
+    // Packages of the apps with a launcher in the application menu
+    Q_PROPERTY(QStringList launchers READ launchers NOTIFY launchersChanged)
     Q_PROPERTY(bool pairing READ isPairing NOTIFY pairingChanged)
     // The text to show as a QR code while the phone may scan it
     Q_PROPERTY(QString qrContent READ qrContent NOTIFY pairingChanged)
@@ -64,6 +66,7 @@ public:
     QVariantList apps() const;
     bool isRefreshingApps() const;
     QString appsError() const;
+    QStringList launchers() const;
     bool isPairing() const;
     QString qrContent() const;
 
@@ -74,6 +77,7 @@ public:
     Q_INVOKABLE void startWebcam(const QString &facing = QString());
     Q_INVOKABLE void stopWebcam();
     Q_INVOKABLE void refreshApps();
+    Q_INVOKABLE void setLauncher(const QString &package, bool enabled);
     Q_INVOKABLE void pair(const QString &address, const QString &code);
     Q_INVOKABLE void startQrPairing();
     Q_INVOKABLE void stopQrPairing();
@@ -83,6 +87,7 @@ Q_SIGNALS:
     void statusChanged();
     void settingsChanged();
     void appsChanged();
+    void launchersChanged();
     void pairingChanged();
     void error(const QString &message);
     /**
@@ -94,7 +99,8 @@ private Q_SLOTS:
     void readStatus();
     void readSettings();
     void readApps();
-    void onAppsChanged();
+    void readLaunchers();
+    void onAppsChanged(const QString &error);
     void onPairingFinished(bool success, const QString &message);
 
 private:
@@ -113,6 +119,7 @@ private:
     QVariantList m_apps;
     bool m_refreshingApps = false;
     QString m_appsError;
+    QStringList m_launchers;
     bool m_pairing = false;
     QString m_qrContent;
     // Waiting for startQrPairing() to answer, with the pairingFinished message meanwhile

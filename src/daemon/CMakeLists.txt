@@ -4,6 +4,7 @@ add_executable(phonekompaniond
     kdeconnect.cpp
     phone.cpp
     phonemanager.cpp
+    runner.cpp
     scrcpy.cpp
     tray.cpp
 )
@@ -37,3 +38,4 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/io.github.rkrajnc.phonekompaniond.serv
 install(FILES io.github.rkrajnc.phonekompaniond.desktop DESTINATION ${KDE_INSTALL_APPDIR})
 install(FILES io.github.rkrajnc.phonekompaniond.desktop DESTINATION ${KDE_INSTALL_AUTOSTARTDIR})
 install(FILES phonekompaniond.notifyrc DESTINATION ${KDE_INSTALL_KNOTIFYRCDIR})
+install(FILES phonekompanion_runner.desktop DESTINATION ${KDE_INSTALL_DATADIR}/krunner/dbusplugins)

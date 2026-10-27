@@ -10,6 +10,8 @@
 #include <QStringList>
 #include <QVariantMap>
 
+class Scrcpy;
+
 /**
  * A phone or tablet paired in KDE Connect, at /phones/<KDE Connect device id>
  */
@@ -33,6 +35,11 @@ public:
      */
     QStringList addresses() const;
     QString dbusPath() const;
+    /**
+     * Mirroring, set once by PhoneManager
+     */
+    Scrcpy *scrcpy() const;
+    void setScrcpy(Scrcpy *scrcpy);
 
     /**
      * Takes the KDE Connect device properties, returns whether a property on D-Bus changed
@@ -47,4 +54,5 @@ private:
     QString m_name;
     bool m_reachable = false;
     QStringList m_addresses;
+    Scrcpy *m_scrcpy = nullptr;
 };

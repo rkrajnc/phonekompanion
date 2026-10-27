@@ -11,6 +11,7 @@
 #include <QDBusVariant>
 #include <QElapsedTimer>
 #include <QHash>
+#include <QJsonArray>
 #include <QPointer>
 #include <QStringList>
 
@@ -110,11 +111,36 @@ public:
      */
     Q_SCRIPTABLE QString refreshApps();
 
+    /**
+     * Packages of the apps with a launcher in the application menu
+     */
+    Q_SCRIPTABLE QStringList launchers() const;
+    /**
+     * Adds a launcher for the app to the application menu, or removes it. Returns an error
+     * message, or an empty string.
+     */
+    Q_SCRIPTABLE QString setLauncher(const QString &package, bool enabled);
+    void removeLaunchers();
+
+    /**
+     * The apps as from apps(), parsed
+     */
+    QJsonArray appList() const;
+    /**
+     * Shows an error of an action as a notification, for actions started without a window;
+     * nothing for an empty error
+     */
+    void notifyError(const QString &error);
+
 Q_SIGNALS:
     Q_SCRIPTABLE void statusChanged();
     Q_SCRIPTABLE void settingsChanged();
     Q_SCRIPTABLE void pairingFinished(bool success, const QString &message);
-    Q_SCRIPTABLE void appsChanged();
+    /**
+     * After refreshApps(), with why the apps could not be read, or an empty error
+     */
+    Q_SCRIPTABLE void appsChanged(const QString &error);
+    Q_SCRIPTABLE void launchersChanged();
 
 private:
     QVariant setting(const QString &key) const;
@@ -131,6 +157,8 @@ private:
     QStringList scrcpyArguments() const;
     void startWindow(const QString &key, const QString &title, const QStringList &arguments, bool camera = false);
     void windowClosed(const QString &key);
+    QString launcherPath(const QString &package) const;
+    QString writeLauncher(const QString &package);
     void showError(const QString &title, const QString &text);
     void focusWindow(qint64 pid);
 
@@ -152,6 +180,9 @@ private:
     // The window playing the phone's sound
     QString m_audioWindow;
     QProcess *m_appsRequest = nullptr;
+    QJsonArray m_appList;
+    // The phone's name in the launchers, rewritten when the phone is renamed
+    QString m_launcherName;
     QString m_webcamDevice;
     QString m_webcamName;
     QProcess *m_webcam = nullptr;

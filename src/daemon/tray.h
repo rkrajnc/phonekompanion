@@ -6,13 +6,17 @@
 
 #pragma once
 
+#include <QList>
 #include <QObject>
 
 class KStatusNotifierItem;
+class Phone;
 class PhoneManager;
+class QAction;
 
 /**
- * The system tray icon: opens the window, shows which phones are connected
+ * The system tray icon: opens the window, shows which phones are connected, and has
+ * the mirroring actions of the connected phones in its menu
  */
 class Tray : public QObject
 {
@@ -23,8 +27,12 @@ public:
 
 private:
     void update();
-    void openWindow();
+    void updateMenu();
+    void openWindow(const QStringList &arguments = {});
 
     PhoneManager *m_manager;
     KStatusNotifierItem *m_item;
+    // The phones' actions in the menu, rebuilt when the phones or their status change
+    QList<QAction *> m_phoneActions;
+    QAction *m_phonesEnd;
 };

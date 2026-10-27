@@ -18,6 +18,8 @@ class PhonesModel : public QAbstractListModel
     QML_ELEMENT
     Q_PROPERTY(bool serviceRunning READ isServiceRunning NOTIFY serviceRunningChanged)
     Q_PROPERTY(bool kdeConnectRunning READ isKdeConnectRunning NOTIFY kdeConnectRunningChanged)
+    // The daemon's phones were read, so a phone not in the model is not paired
+    Q_PROPERTY(bool loaded READ isLoaded NOTIFY loadedChanged)
 
 public:
     enum Roles {
@@ -34,6 +36,7 @@ public:
 
     bool isServiceRunning() const;
     bool isKdeConnectRunning() const;
+    bool isLoaded() const;
 
     /**
      * The row of a phone, or -1
@@ -45,6 +48,7 @@ public:
 Q_SIGNALS:
     void serviceRunningChanged();
     void kdeConnectRunningChanged();
+    void loadedChanged();
 
 private Q_SLOTS:
     void refresh();
@@ -61,6 +65,7 @@ private:
     QList<Phone> m_phones;
     bool m_serviceRunning = false;
     bool m_kdeConnectRunning = false;
+    bool m_loaded = false;
     // Replies to an older refresh() are dropped
     quint64 m_generation = 0;
 };

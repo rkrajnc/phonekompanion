@@ -1,0 +1,19 @@
+# SPDX-FileCopyrightText: 2026 Rok Krajnc <rok.krajnc@gmail.com>
+# SPDX-License-Identifier: CC0-1.0
+
+[Desktop Entry]
+Name=Phone Kompanion
+Comment=Open apps, the screen or the camera of your phone in windows on this computer
+Type=Service
+Icon=smartphone
+X-KDE-PluginInfo-Author=Rok Krajnc
+X-KDE-PluginInfo-Email=rok.krajnc@gmail.com
+X-KDE-PluginInfo-Name=phonekompanion
+X-KDE-PluginInfo-License=GPL
+X-KDE-PluginInfo-EnabledByDefault=true
+X-Plasma-API=DBus
+X-Plasma-DBusRunner-Service=io.github.rkrajnc.phonekompaniond
+X-Plasma-DBusRunner-Path=/runner
+X-Plasma-Runner-Match-Regex=(?i)^phone\s
+X-Plasma-Runner-Syntaxes=phone :q:;phone screen;phone camera
+X-Plasma-Runner-Syntax-Descriptions=Opens the phone app :q: in a window;Shows the phone's screen in a window;Shows the phone's camera in a window

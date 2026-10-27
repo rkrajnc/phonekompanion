@@ -6,6 +6,7 @@
 
 #include "scrcpy.h"
 
+#include <KDesktopFile>
 #include <KLocalizedString>
 #include <KSharedConfig>
 #include <QDBusConnection>
@@ -22,10 +23,12 @@
 #include <QProcess>
 #include <QRandomGenerator>
 #include <QRegularExpression>
+#include <QStandardPaths>
 #include <QTemporaryFile>
 #include <QTimer>
 
 #include "adb.h"
+#include "findexecutable.h"
 #include "phone.h"
 #include "phonekompaniond_debug.h"
 
@@ -48,6 +51,26 @@ QString scrcpyError(const QStringList &lines)
         }
     }
     return error;
+}
+
+// Quotes an argument for a .desktop file's Exec key
+QString quoteExecArgument(const QString &argument)
+{
+    static const QRegularExpression reserved(QStringLiteral("[\\s\"'\\\\><~|&;$*?#()`]"));
+    if (!argument.contains(reserved)) {
+        return argument;
+    }
+    QString quoted = argument;
+    for (const QLatin1Char c : {QLatin1Char('\\'), QLatin1Char('"'), QLatin1Char('`'), QLatin1Char('$')}) {
+        quoted.replace(c, QLatin1Char('\\') + c);
+    }
+    return QLatin1Char('"') + quoted + QLatin1Char('"');
+}
+
+// Exec keeps a literal % as %%, as % starts its field codes
+QString escapeExecPercent(QString exec)
+{
+    return exec.replace(QLatin1Char('%'), QStringLiteral("%%"));
 }
 
 const QVariantMap &defaultSettings()
@@ -75,6 +98,7 @@ Scrcpy::Scrcpy(Phone *phone, Adb *adb)
     , m_config(KSharedConfig::openConfig(QStringLiteral("phonekompanionrc"))->group(phone->id()).group(QStringLiteral("Scrcpy")))
     , m_state(KSharedConfig::openStateConfig(QStringLiteral("phonekompanionstaterc"))->group(phone->id()).group(QStringLiteral("Scrcpy")))
 {
+    m_appList = QJsonDocument::fromJson(apps().toUtf8()).array();
     findWebcam();
     connect(m_phone, &Phone::changed, this, [this] {
         // E.g. v4l2loopback was loaded while the phone was away
@@ -82,6 +106,13 @@ Scrcpy::Scrcpy(Phone *phone, Adb *adb)
             Q_EMIT statusChanged();
         }
         matchDevice();
+        if (!m_phone->name().isEmpty() && m_phone->name() != m_launcherName) {
+            m_launcherName = m_phone->name();
+            const QStringList packages = launchers();
+            for (const QString &package : packages) {
+                writeLauncher(package);
+            }
+        }
     });
     connect(m_adb, &Adb::toolsChanged, this, &Scrcpy::statusChanged);
     connect(m_adb, &Adb::devicesChanged, this, [this] {
@@ -607,6 +638,13 @@ void Scrcpy::windowClosed(const QString &key)
     }
 }
 
+void Scrcpy::notifyError(const QString &error)
+{
+    if (!error.isEmpty()) {
+        showError(m_phone->name(), error);
+    }
+}
+
 void Scrcpy::showError(const QString &title, const QString &text)
 {
     auto *notification = new KNotification(QStringLiteral("error"));
@@ -665,6 +703,87 @@ QString Scrcpy::apps() const
     return m_state.readEntry(QStringLiteral("apps"), QStringLiteral("[]"));
 }
 
+QJsonArray Scrcpy::appList() const
+{
+    return m_appList;
+}
+
+QString Scrcpy::launcherPath(const QString &package) const
+{
+    const QString applications = QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation);
+    return QStringLiteral("%1/phonekompanion-%2-%3.desktop").arg(applications, m_phone->id(), package);
+}
+
+QStringList Scrcpy::launchers() const
+{
+    const QString prefix = QStringLiteral("phonekompanion-%1-").arg(m_phone->id());
+    const QDir applications(QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation));
+    QStringList packages;
+    const QStringList files = applications.entryList({prefix + QStringLiteral("*.desktop")}, QDir::Files);
+    for (const QString &file : files) {
+        packages.append(file.mid(prefix.size()).chopped(8));
+    }
+    return packages;
+}
+
+QString Scrcpy::setLauncher(const QString &package, bool enabled)
+{
+    static const QRegularExpression packagePattern(QRegularExpression::anchoredPattern(QStringLiteral("[A-Za-z0-9_]+(\\.[A-Za-z0-9_]+)+")));
+    if (!packagePattern.match(package).hasMatch()) {
+        return i18n("%1 is not an app package name.", package);
+    }
+    if (!enabled) {
+        QFile::remove(launcherPath(package));
+        Q_EMIT launchersChanged();
+        return QString();
+    }
+    const QString error = writeLauncher(package);
+    Q_EMIT launchersChanged();
+    return error;
+}
+
+void Scrcpy::removeLaunchers()
+{
+    const QStringList packages = launchers();
+    for (const QString &package : packages) {
+        QFile::remove(launcherPath(package));
+    }
+}
+
+QString Scrcpy::writeLauncher(const QString &package)
+{
+    QString name = package;
+    for (const QJsonValue &app : std::as_const(m_appList)) {
+        if (app[QStringLiteral("package")].toString() == package) {
+            name = app[QStringLiteral("name")].toString();
+            break;
+        }
+    }
+    const QString cli = findOwnExecutable(QStringLiteral("phonekompanion-cli"));
+    if (cli.isEmpty()) {
+        return i18n("phonekompanion-cli is not installed.");
+    }
+    QDir().mkpath(QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation));
+    KDesktopFile file(launcherPath(package));
+    KConfigGroup entry = file.desktopGroup();
+    entry.writeEntry("Type", "Application");
+    // The phone's name tells it apart from a desktop app of the same name
+    entry.writeEntry("Name", i18nc("@info launcher name, %1 is a phone app, %2 the phone's name", "%1 (%2)", name, m_phone->name()));
+    entry.writeEntry("GenericName", i18nc("@info launcher subtitle", "Phone App"));
+    entry.writeEntry("Comment", i18nc("@info %1 is a phone app, %2 the phone's name", "Opens %1 from %2 in a window", name, m_phone->name()));
+    entry.writeEntry("Icon", "smartphone");
+    entry.writeEntry("TryExec", cli);
+    // --notify, as nothing else would show why the app did not open
+    entry.writeEntry("Exec", QStringLiteral("%1 --phone %2 --open-app %3 --notify").arg(escapeExecPercent(quoteExecArgument(cli)), m_phone->id(), package));
+    // The window comes from scrcpy, not from the launched process
+    entry.writeEntry("StartupNotify", false);
+    entry.writeEntry("Categories", "Utility;");
+    if (!file.sync()) {
+        return i18n("Could not write %1.", launcherPath(package));
+    }
+    return QString();
+}
+
 QString Scrcpy::refreshApps()
 {
     const QString reason = unavailableReason();
@@ -687,7 +806,7 @@ QString Scrcpy::refreshApps()
             }
         }
         if (found.isEmpty()) {
-            Q_EMIT appsChanged();
+            Q_EMIT appsChanged(i18n("Could not read the apps on %1.", m_phone->name()));
             return;
         }
         std::sort(found.begin(), found.end(), [](const std::pair<QString, QString> &a, const std::pair<QString, QString> &b) {
@@ -701,15 +820,16 @@ QString Scrcpy::refreshApps()
         if (json != this->apps()) {
             m_state.writeEntry(QStringLiteral("apps"), json);
             m_state.sync();
+            m_appList = apps;
         }
-        Q_EMIT appsChanged();
+        Q_EMIT appsChanged(QString());
         qCDebug(PHONEKOMPANIOND) << "Apps on" << m_phone->name() << apps.size();
     });
     connect(m_appsRequest, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
         if (error == QProcess::FailedToStart) {
             m_appsRequest->deleteLater();
             m_appsRequest = nullptr;
-            Q_EMIT appsChanged();
+            Q_EMIT appsChanged(i18n("Could not start %1.", m_adb->scrcpy()));
         }
     });
     m_appsRequest->start(m_adb->scrcpy(), {QStringLiteral("--serial=") + m_adbSerial, QStringLiteral("--list-apps")});

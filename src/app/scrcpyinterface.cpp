@@ -32,6 +32,7 @@ ScrcpyInterface::ScrcpyInterface(QObject *parent)
         readStatus();
         readSettings();
         readApps();
+        readLaunchers();
     });
     // Phones come and go with KDE Connect
     bus.connect(PHONEKOMPANION_SERVICE, PHONEKOMPANION_PHONES_PATH, PHONEKOMPANION_PHONES_INTERFACE, QStringLiteral("phonesChanged"), this, SLOT(readStatus()));
@@ -57,6 +58,7 @@ void ScrcpyInterface::setPhoneId(const QString &phoneId)
     readStatus();
     readSettings();
     readApps();
+    readLaunchers();
 }
 
 bool ScrcpyInterface::isAvailable() const
@@ -124,6 +126,11 @@ QString ScrcpyInterface::appsError() const
     return m_appsError;
 }
 
+QStringList ScrcpyInterface::launchers() const
+{
+    return m_launchers;
+}
+
 bool ScrcpyInterface::isPairing() const
 {
     return m_pairing;
@@ -181,6 +188,11 @@ void ScrcpyInterface::refreshApps()
             Q_EMIT appsChanged();
         }
     });
+}
+
+void ScrcpyInterface::setLauncher(const QString &package, bool enabled)
+{
+    callAction(QStringLiteral("setLauncher"), {package, enabled});
 }
 
 void ScrcpyInterface::pair(const QString &address, const QString &code)
@@ -278,9 +290,23 @@ void ScrcpyInterface::readApps()
     });
 }
 
-void ScrcpyInterface::onAppsChanged()
+void ScrcpyInterface::readLaunchers()
+{
+    if (m_phoneId.isEmpty()) {
+        return;
+    }
+    call(QStringLiteral("launchers"), {}, [this](const QDBusMessage &reply) {
+        if (reply.type() == QDBusMessage::ReplyMessage) {
+            m_launchers = reply.arguments().value(0).toStringList();
+            Q_EMIT launchersChanged();
+        }
+    });
+}
+
+void ScrcpyInterface::onAppsChanged(const QString &error)
 {
     m_refreshingApps = false;
+    m_appsError = error;
     readApps();
 }
 
@@ -317,7 +343,8 @@ void ScrcpyInterface::connectSignals(bool connect)
     const std::pair<const char *, const char *> signalSlots[] = {
         {"statusChanged", SLOT(readStatus())},
         {"settingsChanged", SLOT(readSettings())},
-        {"appsChanged", SLOT(onAppsChanged())},
+        {"appsChanged", SLOT(onAppsChanged(QString))},
+        {"launchersChanged", SLOT(readLaunchers())},
         {"pairingFinished", SLOT(onPairingFinished(bool, QString))},
     };
     for (const auto &[signal, slot] : signalSlots) {
@@ -359,6 +386,7 @@ void ScrcpyInterface::reset()
     m_status.clear();
     m_settings.clear();
     m_apps.clear();
+    m_launchers.clear();
     m_refreshingApps = false;
     m_appsError.clear();
     m_pairing = false;
@@ -368,6 +396,7 @@ void ScrcpyInterface::reset()
     Q_EMIT statusChanged();
     Q_EMIT settingsChanged();
     Q_EMIT appsChanged();
+    Q_EMIT launchersChanged();
     Q_EMIT pairingChanged();
 }
 

@@ -12,6 +12,7 @@
 
 #include "phonekompanion-version.h"
 #include "phonemanager.h"
+#include "runner.h"
 #include "tray.h"
 
 int main(int argc, char *argv[])
@@ -35,6 +36,7 @@ int main(int argc, char *argv[])
 
     PhoneManager manager;
     Tray tray(&manager);
+    Runner runner(&manager);
 
     return app.exec();
 }

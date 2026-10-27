@@ -31,6 +31,26 @@ Kirigami.ApplicationWindow {
         });
     }
 
+    // Waits for the daemon's phones, e.g. right after the window started
+    property var pendingPhone: null
+
+    function openPhoneById(phoneId: string, apps: bool) {
+        const row = phonesModel.indexOf(phoneId);
+        if (row < 0) {
+            // An unknown phone is dropped once the phones were read
+            pendingPhone = phonesModel.loaded ? null : {
+                phoneId: phoneId,
+                apps: apps
+            };
+            return;
+        }
+        pendingPhone = null;
+        const page = openPhone(phoneId, phonesModel.data(phonesModel.index(row, 0)));
+        if (apps) {
+            page.openApps();
+        }
+    }
+
     Component {
         id: phonePage
         PhonePage {}
@@ -46,6 +66,9 @@ Kirigami.ApplicationWindow {
                 id: phonesModel
                 // Close the page of a phone that was unpaired, or of all phones when the service stops
                 onModelReset: {
+                    if (root.pendingPhone && loaded) {
+                        root.openPhoneById(root.pendingPhone.phoneId, root.pendingPhone.apps);
+                    }
                     const page = root.pageStack.get(1);
                     if (page && indexOf(page.phoneId) < 0) {
                         root.pageStack.pop(root.pageStack.initialPage);

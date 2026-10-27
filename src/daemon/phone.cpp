@@ -64,4 +64,14 @@ QString Phone::dbusPath() const
     return PHONEKOMPANION_PHONES_PATH + QLatin1Char('/') + m_id;
 }
 
+Scrcpy *Phone::scrcpy() const
+{
+    return m_scrcpy;
+}
+
+void Phone::setScrcpy(Scrcpy *scrcpy)
+{
+    m_scrcpy = scrcpy;
+}
+
 #include "moc_phone.cpp"

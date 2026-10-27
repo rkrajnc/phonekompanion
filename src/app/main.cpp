@@ -5,6 +5,7 @@
  */
 
 #include <QApplication>
+#include <QCommandLineParser>
 #include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QWindow>
@@ -21,6 +22,22 @@ static void raiseWindow(QWindow *window)
 {
     KWindowSystem::updateStartupId(window);
     KWindowSystem::activateWindow(window);
+}
+
+// --phone and --apps, from this start or from a second start that activates this window
+static void openPhone(QCommandLineParser &parser, const QStringList &arguments, QObject *window)
+{
+    if (!parser.parse(arguments)) {
+        qWarning() << parser.errorText();
+        return;
+    }
+    if (parser.isSet(QStringLiteral("phone"))) {
+        QMetaObject::invokeMethod(window,
+                                  "openPhoneById",
+                                  Qt::QueuedConnection,
+                                  Q_ARG(QString, parser.value(QStringLiteral("phone"))),
+                                  Q_ARG(bool, parser.isSet(QStringLiteral("apps"))));
+    }
 }
 
 int main(int argc, char *argv[])
@@ -40,6 +57,13 @@ int main(int argc, char *argv[])
     KAboutData::setApplicationData(aboutData);
     QApplication::setWindowIcon(QIcon::fromTheme(QStringLiteral("smartphone")));
 
+    QCommandLineParser parser;
+    parser.addOption(QCommandLineOption(QStringLiteral("phone"), i18n("Open the page of this phone, by its KDE Connect id"), i18n("id")));
+    parser.addOption(QCommandLineOption(QStringLiteral("apps"), i18n("Open the phone's apps, with --phone")));
+    aboutData.setupCommandLine(&parser);
+    parser.process(app);
+    aboutData.processCommandLine(&parser);
+
     // io.github.rkrajnc.phonekompanion
     KDBusService service(KDBusService::Unique);
 
@@ -54,7 +78,9 @@ int main(int argc, char *argv[])
     if (!window) {
         return 1;
     }
-    QObject::connect(&service, &KDBusService::activateRequested, window, [window]() {
+    openPhone(parser, QCoreApplication::arguments(), window);
+    QObject::connect(&service, &KDBusService::activateRequested, window, [window, &parser](const QStringList &arguments) {
+        openPhone(parser, arguments, window);
         raiseWindow(window);
     });
 
