@@ -111,5 +111,7 @@ Kirigami.ScrollablePage
 
         width: parent.width
         addresses: page.addresses
+        // Phone Kompanion: the text of an sms: link, ready to send; unused in KDE Connect
+        Component.onCompleted: text = page.initialMessage
     }
 }

@@ -294,6 +294,18 @@ void ConversationListModel::displayContacts()
     }
 }
 
+QVariantMap ConversationListModel::conversationForAddress(const QString &address)
+{
+    const QStandardItem *conversation = getConversationForAddress(address);
+    if (!conversation) {
+        return {};
+    }
+    return {
+        {QStringLiteral("addresses"), conversation->data(AddressesRole)},
+        {QStringLiteral("conversationId"), conversation->data(ConversationIdRole)},
+    };
+}
+
 void ConversationListModel::createConversationForAddress(const QString &address)
 {
     QStandardItem *item = new QStandardItem();

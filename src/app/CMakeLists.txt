@@ -36,4 +36,4 @@ target_link_libraries(phonekompanion PRIVATE
 )
 
 install(TARGETS phonekompanion ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
-install(PROGRAMS io.github.rkrajnc.phonekompanion.desktop io.github.rkrajnc.phonekompanion.dialer.desktop DESTINATION ${KDE_INSTALL_APPDIR})
+install(PROGRAMS io.github.rkrajnc.phonekompanion.desktop io.github.rkrajnc.phonekompanion.dialer.desktop io.github.rkrajnc.phonekompanion.messages.desktop DESTINATION ${KDE_INSTALL_APPDIR})

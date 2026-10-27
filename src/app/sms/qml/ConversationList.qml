@@ -83,6 +83,62 @@ Kirigami.ScrollablePage
     function refresh() {
         conversationListModel.refresh();
     }
+
+    // Phone Kompanion: an sms: link, {address, message}, set by the phone page when it opens the
+    // list: the one-to-one conversation with the address and the message ready to send. An
+    // existing one opens as soon as it is there, a new one once the conversations stop coming;
+    // nothing if a conversation was opened meanwhile.
+    property var wantedConversation: null
+
+    Component.onCompleted: findWantedConversation(false)
+
+    function findWantedConversation(create) {
+        const wanted = wantedConversation;
+        if (!wanted) {
+            return;
+        }
+        // A page after this list, e.g. a conversation the user opened; -1 while the list is pushed
+        const index = Kirigami.ColumnView.index;
+        if (index >= 0 && index < applicationWindow().pageStack.depth - 1) {
+            wantedConversation = null;
+            return;
+        }
+        let conversation = conversationListModel.conversationForAddress(wanted.address);
+        if (conversation.conversationId === undefined) {
+            if (!create) {
+                conversationsSettled.restart();
+                return;
+            } else if (!SmsHelper.isAddressValid(wanted.address)) {
+                wantedConversation = null;
+                return;
+            }
+            conversationListModel.createConversationForAddress(wanted.address);
+            conversation = conversationListModel.conversationForAddress(wanted.address);
+        }
+        wantedConversation = null;
+        openConversation({
+            addresses: conversation.addresses,
+            conversationId: conversation.conversationId,
+            isMultitarget: false,
+            initialMessage: wanted.message
+        });
+    }
+
+    // The conversations come one by one; a new conversation once they stop for a moment, or when
+    // none came for a while
+    Timer {
+        id: conversationsSettled
+        interval: view.count > 0 ? 2000 : 10000
+        onTriggered: page.findWantedConversation(true)
+    }
+
+    Connections {
+        target: view
+        function onCountChanged() {
+            page.findWantedConversation(false);
+        }
+    }
+
     property string currentSearchText
     property alias conversationListModel: conversationListModel
     property bool deviceConnected

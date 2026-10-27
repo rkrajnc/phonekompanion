@@ -39,16 +39,22 @@ Kirigami.ApplicationWindow {
     // Waits for the daemon's phones, e.g. right after the window started
     property var pendingPhone: null
 
-    // subpage is "apps", "dialer", "messages" or empty, number one for the dialer; without a phone id, the
-    // phone connected for calls
-    function openPhoneById(phoneId: string, subpage: string, number: string) {
-        const row = phoneId ? phonesModel.indexOf(phoneId) : phonesModel.rowForCalls();
+    // subpage is "apps", "dialer", "messages" or empty; number one for the dialer, or with text for a
+    // conversation in Messages; without a phone id, the phone suiting the subpage
+    function openPhoneById(phoneId: string, subpage: string, number: string, text: string) {
+        const rows = {
+            messages: () => phonesModel.rowForMessages(),
+            apps: () => phonesModel.rowForReachable(),
+            dialer: () => phonesModel.rowForCalls()
+        };
+        const row = phoneId ? phonesModel.indexOf(phoneId) : (rows[subpage] ?? rows.dialer)();
         if (row < 0) {
             // Dropped once KDE Connect's phones were read, as it is then not paired
             pendingPhone = phonesModel.loaded && phonesModel.kdeConnectRunning ? null : {
                 phoneId: phoneId,
                 subpage: subpage,
-                number: number
+                number: number,
+                text: text
             };
             return;
         }
@@ -60,7 +66,7 @@ Kirigami.ApplicationWindow {
         } else if (subpage === "dialer") {
             page.openDialer().setNumber(number);
         } else if (subpage === "messages") {
-            page.openMessages();
+            page.openMessages(number, text);
         }
     }
 
@@ -238,18 +244,12 @@ Kirigami.ApplicationWindow {
                 onModelReset: {
                     root.phonesRevision++;
                     if (root.pendingPhone && loaded) {
-                        root.openPhoneById(root.pendingPhone.phoneId, root.pendingPhone.subpage, root.pendingPhone.number);
+                        root.openPhoneById(root.pendingPhone.phoneId, root.pendingPhone.subpage, root.pendingPhone.number, root.pendingPhone.text);
                     }
                     // At the start, the phone KDE Connect reaches, else the first one, as after going back;
                     // not later, e.g. when a phone is paired while the window is open
                     if (!root.phoneOpened && !root.pendingPhone && loaded && rowCount() > 0) {
-                        let row = 0;
-                        for (let i = 0; i < rowCount(); ++i) {
-                            if (data(index(i, 0), PhonesModel.ReachableRole)) {
-                                row = i;
-                                break;
-                            }
-                        }
+                        const row = rowForReachable();
                         root.openPhone(data(index(row, 0), PhonesModel.PhoneIdRole), data(index(row, 0)));
                     }
                     if (loaded) {

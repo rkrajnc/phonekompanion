@@ -9,6 +9,8 @@
 #include <QAbstractListModel>
 #include <QQmlEngine>
 
+#include <initializer_list>
+
 /**
  * The phones known to phonekompaniond, over D-Bus
  */
@@ -45,9 +47,18 @@ public:
      */
     Q_INVOKABLE int indexOf(const QString &phoneId) const;
     /**
-     * The row of the first phone connected for calls, else of the first phone, or -1
+     * The row of the first phone connected for calls, else of the first reachable one, else of
+     * the first phone, or -1
      */
     Q_INVOKABLE int rowForCalls() const;
+    /**
+     * The row of the first phone whose messages are available, else as rowForReachable()
+     */
+    Q_INVOKABLE int rowForMessages() const;
+    /**
+     * The row of the first phone KDE Connect reaches, else of the first phone, or -1
+     */
+    Q_INVOKABLE int rowForReachable() const;
     Q_INVOKABLE void startService();
     Q_INVOKABLE void openKdeConnect();
 
@@ -65,9 +76,12 @@ private:
         QString name;
         bool reachable = false;
         bool callsConnected = false;
+        bool messagesAvailable = false;
     };
 
     void setPhones(QList<Phone> phones, bool kdeConnectRunning);
+    // The row of the first phone with the first of the flags set, else 0, or -1 without phones
+    int firstRow(std::initializer_list<bool Phone::*> flags) const;
 
     QList<Phone> m_phones;
     bool m_serviceRunning = false;

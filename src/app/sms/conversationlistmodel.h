@@ -48,6 +48,11 @@ public:
      * This method creates conversation with an arbitrary address
      */
     Q_INVOKABLE void createConversationForAddress(const QString &address);
+    /**
+     * Phone Kompanion: the one-to-one conversation with an address, matched as phone numbers, as
+     * {addresses, conversationId}; empty if there is none
+     */
+    Q_INVOKABLE QVariantMap conversationForAddress(const QString &address);
 
 public Q_SLOTS:
     void handleCreatedConversation(const QDBusVariant &msg);

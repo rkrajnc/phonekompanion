@@ -142,6 +142,12 @@ void Tray::updateMenu()
         if (!phone->isReachable()) {
             continue;
         }
+        if (phone->messagesAvailable()) {
+            addAction(QStringLiteral("dialog-messages"), i18n("Messages…"), [this, phone] {
+                openWindow({QStringLiteral("--phone"), phone->id(), QStringLiteral("--messages")});
+                return QString();
+            });
+        }
         addAction(QStringLiteral("video-display"), i18n("Mirror Screen"), [scrcpy] {
             return scrcpy->mirrorScreen();
         });

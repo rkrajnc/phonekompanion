@@ -27,11 +27,17 @@ Kirigami.ScrollablePage {
 
     // The page last opened next to this one, by name, for forward to reopen it after back closed it
     property string subpage
-    // --messages before the phone's status was read
-    property bool messagesWanted: false
+    // Asked for before the phone's status was read, e.g. with --messages or --apps when the
+    // window starts; opens once it can, unless another page was opened meanwhile
+    property string wantedSubpage
+    property var wantedProperties: ({})
 
     // Replaces the page next to this one: "apps", "dialer", "messages", "callsSettings" or "scrcpySettings"
     function openSubpage(name: string): Kirigami.Page {
+        return openSubpageWith(name, {});
+    }
+
+    function openSubpageWith(name: string, properties: var): Kirigami.Page {
         const components = {
             apps: appsPage,
             dialer: dialerPage,
@@ -40,15 +46,16 @@ Kirigami.ScrollablePage {
             scrcpySettings: scrcpySettingsPage
         };
         if (!canOpen(name)) {
+            const statusRead = name === "apps" ? scrcpy.available : phone.available;
+            wantedSubpage = statusRead ? "" : name;
+            wantedProperties = statusRead ? {} : properties;
             return null;
         }
-        // Another page opened meanwhile wins over a waiting --messages
-        if (name !== "messages") {
-            messagesWanted = false;
-        }
+        wantedSubpage = "";
+        wantedProperties = {};
         subpage = name;
         pageStack.pop(page);
-        return pageStack.push(components[name]);
+        return pageStack.push(components[name], properties);
     }
 
     // As the entries here allow: Messages only while KDE Connect's SMS plugin is there, as the
@@ -62,6 +69,12 @@ Kirigami.ScrollablePage {
         return true;
     }
 
+    function openWantedSubpage() {
+        if (wantedSubpage) {
+            openSubpageWith(wantedSubpage, wantedProperties);
+        }
+    }
+
     function openApps() {
         return openSubpage("apps");
     }
@@ -70,10 +83,20 @@ Kirigami.ScrollablePage {
         return openSubpage("dialer");
     }
 
-    function openMessages() {
-        // A page just opened has not read the phone's status yet
-        messagesWanted = !phone.available;
-        return openSubpage("messages");
+    // From an sms: link: with an address, the conversation with it and the text ready to send;
+    // with only a text, the list asking for the recipient
+    function openMessages(address: string, text: string): Kirigami.Page {
+        if (address) {
+            return openSubpageWith("messages", {
+                wantedConversation: {
+                    address: address,
+                    message: text
+                }
+            });
+        }
+        return openSubpageWith("messages", text ? {
+            initialMessage: text
+        } : {});
     }
 
     actions: [
@@ -97,17 +120,13 @@ Kirigami.ScrollablePage {
     PhoneInterface {
         id: phone
         phoneId: page.phoneId
-        onStatusChanged: {
-            if (page.messagesWanted && available) {
-                page.messagesWanted = false;
-                page.openMessages();
-            }
-        }
+        onStatusChanged: page.openWantedSubpage()
     }
 
     ScrcpyInterface {
         id: scrcpy
         phoneId: page.phoneId
+        onStatusChanged: page.openWantedSubpage()
         onError: message => applicationWindow().showPassiveNotification(message)
     }
 
@@ -218,7 +237,7 @@ Kirigami.ScrollablePage {
                 return i18n("Needs the phone connected to KDE Connect");
             }
             enabled: phone.messagesAvailable
-            onClicked: page.openMessages()
+            onClicked: page.openMessages("", "")
         }
 
         Kirigami.ListSectionHeader {

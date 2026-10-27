@@ -102,10 +102,30 @@ int PhonesModel::indexOf(const QString &phoneId) const
 
 int PhonesModel::rowForCalls() const
 {
-    const auto it = std::find_if(m_phones.cbegin(), m_phones.cend(), [](const Phone &phone) {
-        return phone.callsConnected;
-    });
-    return it != m_phones.cend() ? it - m_phones.cbegin() : m_phones.isEmpty() ? -1 : 0;
+    return firstRow({&Phone::callsConnected, &Phone::reachable});
+}
+
+int PhonesModel::rowForMessages() const
+{
+    return firstRow({&Phone::messagesAvailable, &Phone::reachable});
+}
+
+int PhonesModel::rowForReachable() const
+{
+    return firstRow({&Phone::reachable});
+}
+
+int PhonesModel::firstRow(std::initializer_list<bool Phone::*> flags) const
+{
+    for (bool Phone::*flag : flags) {
+        const auto it = std::find_if(m_phones.cbegin(), m_phones.cend(), [flag](const Phone &phone) {
+            return phone.*flag;
+        });
+        if (it != m_phones.cend()) {
+            return it - m_phones.cbegin();
+        }
+    }
+    return m_phones.isEmpty() ? -1 : 0;
 }
 
 void PhonesModel::startService()
@@ -162,7 +182,8 @@ void PhonesModel::refresh()
                     pending->phones.append({id,
                                             properties.value(QStringLiteral("name")).toString(),
                                             properties.value(QStringLiteral("reachable")).toBool(),
-                                            properties.value(QStringLiteral("callsConnected")).toBool()});
+                                            properties.value(QStringLiteral("callsConnected")).toBool(),
+                                            properties.value(QStringLiteral("messagesAvailable")).toBool()});
                 }
                 if (--pending->remaining == 0 && generation == m_generation) {
                     setPhones(pending->phones, pending->kdeConnectRunning);

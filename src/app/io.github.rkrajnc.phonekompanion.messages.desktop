@@ -1,0 +1,16 @@
+# SPDX-FileCopyrightText: 2026 Rok Krajnc <rok.krajnc@gmail.com>
+# SPDX-License-Identifier: CC0-1.0
+
+[Desktop Entry]
+Name=Phone Messages
+GenericName=SMS
+Comment=Read and send SMS through your phone, with KDE Connect
+Exec=phonekompanion --messages %u
+Icon=dialog-messages
+Type=Application
+Terminal=false
+Categories=Qt;KDE;Network;Telephony;
+MimeType=x-scheme-handler/sms;
+# Before KDE Connect's own handler, which also takes sms: links
+InitialPreference=10
+StartupWMClass=phonekompanion
