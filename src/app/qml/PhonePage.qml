@@ -165,6 +165,11 @@ Kirigami.ScrollablePage {
             onClicked: page.openApps()
         }
 
+        Kirigami.ListSectionHeader {
+            Layout.fillWidth: true
+            text: i18n("Camera")
+        }
+
         KD.SubtitleDelegate {
             Layout.fillWidth: true
             icon.name: "camera-photo"
