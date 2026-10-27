@@ -45,6 +45,9 @@ add_subdirectory(src/daemon)
 add_subdirectory(src/app)
 add_subdirectory(src/cli)
 
+# For KDebugSettings
+ecm_qt_install_logging_categories(EXPORT PHONEKOMPANION FILE phonekompanion.categories DESTINATION ${KDE_INSTALL_LOGGINGCATEGORIESDIR})
+
 file(GLOB_RECURSE ALL_CLANG_FORMAT_SOURCE_FILES src/*.cpp src/*.h)
 kde_clang_format(${ALL_CLANG_FORMAT_SOURCE_FILES})
 kde_configure_git_pre_commit_hook(CHECKS CLANG_FORMAT)

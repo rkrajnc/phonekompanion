@@ -1,0 +1,12 @@
+-------------------------------------------------------------------
+Tue Oct 27 21:00:00 UTC 2026 - Rok Krajnc <rok.krajnc@gmail.com>
+
+- Initial package, version 0.1.0:
+  * Phone calls over Bluetooth through PipeWire's telephony API,
+    with a dialer, call notifications and the call audio on the
+    computer
+  * The phone's screen, apps and camera in windows with scrcpy,
+    apps in the application menu, the camera as a webcam
+  * KDE Connect's SMS conversations in the window
+  * Tray and KRunner entries, phonekompanion-cli, tel: and sms:
+    links

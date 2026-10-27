@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+SPDX-FileCopyrightText: 2026 Rok Krajnc <rok.krajnc@gmail.com>
+SPDX-License-Identifier: CC0-1.0
+-->
+<component type="desktop-application">
+  <id>io.github.rkrajnc.phonekompanion</id>
+  <launchable type="desktop-id">io.github.rkrajnc.phonekompanion.desktop</launchable>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-2.0-only OR GPL-3.0-only</project_license>
+  <name>Phone Kompanion</name>
+  <summary>Calls, phone apps and SMS on your computer, next to KDE Connect</summary>
+  <developer id="io.github.rkrajnc">
+    <name>Rok Krajnc</name>
+  </developer>
+  <description>
+    <p>
+      Phone Kompanion works alongside KDE Connect and uses the phones paired there. It adds what
+      KDE Connect does not do by itself:
+    </p>
+    <ul>
+      <li>Phone calls over Bluetooth: answer, decline and make calls with the call audio on the computer, with a dialer, call notifications and the contacts KDE Connect syncs</li>
+      <li>The phone's screen, its apps and its camera in windows on the computer, with scrcpy and Wireless debugging; apps can be added to the application menu, and the camera can be used as a webcam</li>
+      <li>The SMS conversations KDE Connect syncs, in the same window</li>
+      <li>Entries in the system tray and in KRunner, a command line tool, and tel: and sms: links</li>
+    </ul>
+  </description>
+  <categories>
+    <category>Network</category>
+    <category>Telephony</category>
+  </categories>
+  <requires>
+    <display_length compare="ge">360</display_length>
+  </requires>
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </supports>
+  <provides>
+    <binary>phonekompanion</binary>
+    <binary>phonekompanion-cli</binary>
+  </provides>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="0.1.0" date="2026-10-27"/>
+  </releases>
+</component>
