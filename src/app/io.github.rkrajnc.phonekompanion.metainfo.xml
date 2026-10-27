@@ -10,6 +10,9 @@ SPDX-License-Identifier: CC0-1.0
   <project_license>GPL-2.0-only OR GPL-3.0-only</project_license>
   <name>Phone Kompanion</name>
   <summary>Calls, phone apps and SMS on your computer, next to KDE Connect</summary>
+  <url type="homepage">https://github.com/rkrajnc/phonekompanion</url>
+  <url type="bugtracker">https://github.com/rkrajnc/phonekompanion/issues</url>
+  <url type="vcs-browser">https://github.com/rkrajnc/phonekompanion</url>
   <developer id="io.github.rkrajnc">
     <name>Rok Krajnc</name>
   </developer>

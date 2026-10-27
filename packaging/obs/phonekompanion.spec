@@ -13,8 +13,9 @@ Version:        0.1.0
 Release:        0
 Summary:        Calls, phone apps and SMS on the desktop, next to KDE Connect
 License:        GPL-2.0-only OR GPL-3.0-only
-# URL: to be added once the repository is public
-Source0:        %{name}-%{version}.tar.xz
+URL:            https://github.com/rkrajnc/phonekompanion
+# GitHub's tarball of the release tag v<version>; `osc service manualrun` downloads it
+Source0:        %{url}/archive/refs/tags/v%{version}/%{name}-%{version}.tar.gz
 BuildRequires:  kf6-extra-cmake-modules >= %{kf6_version}
 BuildRequires:  libphonenumber-devel
 BuildRequires:  cmake(KF6Config) >= %{kf6_version}

@@ -10,16 +10,13 @@ SPDX-License-Identifier: CC0-1.0
 
 ## The source tarball
 
-The repository is not public yet, so OBS gets a tarball made from a commit:
+OBS takes GitHub's tarball of a release tag, `v<version>`, as the spec's `Source0` says. Tag the
+release and push the tag first:
 
 ```
-VERSION=0.1.0
-git archive --prefix=phonekompanion-$VERSION/ -o phonekompanion-$VERSION.tar.xz HEAD
+git tag -a v0.1.0 -m "Phone Kompanion 0.1.0"
+git push origin v0.1.0
 ```
-
-Once the repository is public, a `_service` file with `obs_scm` (or `download_url`) can fetch it
-instead, and the spec gets a `URL:`. The AppStream file then also wants a homepage
-(`<url type="homepage">`); `appstreamcli validate` warns about it until then.
 
 ## First upload
 
@@ -29,8 +26,8 @@ osc checkout home:<user>                      # asks for the openSUSE account on
 cd home:<user>
 osc mkpac phonekompanion
 cd phonekompanion
-cp <repo>/packaging/obs/phonekompanion.spec <repo>/packaging/obs/phonekompanion.changes .
-cp <tarball> .
+cp <repo>/packaging/obs/{phonekompanion.spec,phonekompanion.changes,_service} .
+osc service manualrun                         # downloads the tarball of the tag
 osc add *
 osc commit -m "Initial package"
 ```
@@ -42,16 +39,19 @@ compiled QML uses Qt's private API, so the package fits only the Qt it was built
 ## New versions
 
 Raise `project(... VERSION)` in `CMakeLists.txt`, `Version:` in the spec and the release in the
-AppStream file, add an entry with `osc vc`, replace the tarball, `osc commit`.
+AppStream file, tag and push `v<version>`, add an entry with `osc vc`, then `osc rm` the old
+tarball, `osc service manualrun`, `osc add` the new one and `osc commit`.
 
 ## Checking a build locally
 
 `osc build openSUSE_Tumbleweed x86_64` builds in a clean chroot. A quicker check against the
-installed system, without osc:
+installed system, without osc, from a tarball of HEAD named as GitHub's would be:
 
 ```
+VERSION=0.1.0
 T=$(mktemp -d); mkdir -p $T/SOURCES $T/SPECS
-cp phonekompanion-$VERSION.tar.xz $T/SOURCES/ && cp packaging/obs/phonekompanion.spec $T/SPECS/
+git archive --prefix=phonekompanion-$VERSION/ -o $T/SOURCES/phonekompanion-$VERSION.tar.gz HEAD
+cp packaging/obs/phonekompanion.spec $T/SPECS/
 rpmbuild -ba --define "_topdir $T" $T/SPECS/phonekompanion.spec
 ```
 
