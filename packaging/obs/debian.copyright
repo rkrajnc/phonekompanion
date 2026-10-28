@@ -1,0 +1,43 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Phone Kompanion
+Upstream-Contact: Rok Krajnc <rok.krajnc@gmail.com>
+Source: https://github.com/rkrajnc/phonekompanion
+
+Files: *
+Copyright: 2026 Rok Krajnc <rok.krajnc@gmail.com>
+License: GPL-2.0-only or GPL-3.0-only or LicenseRef-KDE-Accepted-GPL
+
+Files: src/app/sms/*
+Copyright: 2015-2020 Aleix Pol Gonzalez <aleixpol@kde.org>
+           2018-2020 Nicolas Fella <nicolas.fella@gmx.de>
+           2018-2019 Simon Redman <simon@ergotech.com>
+           2020 Aniket Kumar <anikketkumar786@gmail.com>
+           2020 Jiří Wolker <woljiri@gmail.com>
+           2025 Yuki Joou <yukijoou@kemonomimi.gay>
+           2026 Rok Krajnc <rok.krajnc@gmail.com>
+License: GPL-2.0-only or GPL-3.0-only or LicenseRef-KDE-Accepted-GPL
+
+Files: README.md debian/* packaging/* src/*.desktop src/*.desktop.in src/*.metainfo.xml
+       src/*.notifyrc src/*.service.in
+Copyright: 2026 Rok Krajnc <rok.krajnc@gmail.com>
+License: CC0-1.0
+
+License: GPL-2.0-only
+ On Debian systems, the full text of the GNU General Public License version 2
+ is in /usr/share/common-licenses/GPL-2.
+
+License: GPL-3.0-only
+ On Debian systems, the full text of the GNU General Public License version 3
+ is in /usr/share/common-licenses/GPL-3.
+
+License: LicenseRef-KDE-Accepted-GPL
+ This program is free software; you can redistribute it and/or modify it
+ under the terms of the GNU General Public License as published by the Free
+ Software Foundation, either version 2 of the License or version 3 of the
+ License, or any later version accepted by the membership of KDE e.V.
+ (or its successor approved by the membership of KDE e.V.), which shall act
+ as a proxy defined in Section 6 of version 3 of the license.
+
+License: CC0-1.0
+ On Debian systems, the full text of the CC0 1.0 Universal license is in
+ /usr/share/common-licenses/CC0-1.0.

@@ -1,0 +1,62 @@
+# SPDX-FileCopyrightText: 2026 Rok Krajnc <rok.krajnc@gmail.com>
+# SPDX-License-Identifier: CC0-1.0
+#
+# The Build-Depends are also in phonekompanion.dsc, which OBS reads them from
+Source: phonekompanion
+Section: kde
+Priority: optional
+Maintainer: Rok Krajnc <rok.krajnc@gmail.com>
+Build-Depends: debhelper-compat (= 13),
+               cmake,
+               pkg-kde-tools,
+               extra-cmake-modules (>= 6.8),
+               libkf6config-dev (>= 6.8),
+               libkf6coreaddons-dev (>= 6.8),
+               libkf6dbusaddons-dev (>= 6.8),
+               libkf6i18n-dev (>= 6.8),
+               libkf6notifications-dev (>= 6.8),
+               libkf6people-dev (>= 6.8),
+               libkf6pulseaudioqt-dev,
+               libkf6statusnotifieritem-dev (>= 6.8),
+               libkf6windowsystem-dev (>= 6.8),
+               libphonenumber-dev,
+               qt6-base-dev (>= 6.8),
+               qt6-declarative-dev (>= 6.8),
+# The QML modules are checked for at configure time
+               qml6-module-org-kde-kirigami,
+               qml6-module-org-kde-kirigamiaddons-components,
+               qml6-module-org-kde-prison,
+               qml6-module-qtmultimedia
+Standards-Version: 4.7.2
+Homepage: https://github.com/rkrajnc/phonekompanion
+Vcs-Browser: https://github.com/rkrajnc/phonekompanion
+Vcs-Git: https://github.com/rkrajnc/phonekompanion.git
+Rules-Requires-Root: no
+
+Package: phonekompanion
+Architecture: any
+# Phones and their SMS, contacts and call notifications come from KDE Connect
+Depends: kdeconnect,
+         qml6-module-org-kde-kirigami,
+         qml6-module-org-kde-kirigamiaddons-components,
+         qml6-module-org-kde-prison,
+         qml6-module-qtcore,
+         qml6-module-qtmultimedia,
+         qml6-module-qtquick,
+         qml6-module-qtquick-controls,
+         qml6-module-qtquick-dialogs,
+         qml6-module-qtquick-layouts,
+         ${misc:Depends},
+         ${qt6:PrivateAbi},
+         ${shlibs:Depends}
+# Calls over Bluetooth (PipeWire's telephony API and BlueZ), and the phone's screen, apps and camera
+Recommends: adb, bluez, pipewire, scrcpy, wireplumber
+# The phone's camera as a webcam
+Suggests: v4l2loopback-dkms
+Description: Calls, phone apps and SMS on the desktop, next to KDE Connect
+ Phone Kompanion works alongside KDE Connect and uses the phones paired
+ there. It adds phone calls over Bluetooth with the call audio on the
+ computer, the phone's screen, apps and camera in windows (with scrcpy and
+ Wireless debugging), and the SMS conversations KDE Connect syncs, with
+ entries in the system tray and KRunner, a command line tool, and tel: and
+ sms: links.
