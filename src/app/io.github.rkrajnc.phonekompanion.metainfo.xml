@@ -32,6 +32,16 @@ SPDX-License-Identifier: CC0-1.0
     <category>Network</category>
     <category>Telephony</category>
   </categories>
+  <screenshots>
+    <screenshot type="default">
+      <caption>A phone's page, and the dialer searching the contacts</caption>
+      <image>https://raw.githubusercontent.com/rkrajnc/phonekompanion/master/doc/screenshot-dialer.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>The phones from KDE Connect, and what each one offers</caption>
+      <image>https://raw.githubusercontent.com/rkrajnc/phonekompanion/master/doc/screenshot-phone.png</image>
+    </screenshot>
+  </screenshots>
   <requires>
     <display_length compare="ge">360</display_length>
   </requires>
