@@ -1,0 +1,40 @@
+# SPDX-FileCopyrightText: 2026 Rok Krajnc <rok.krajnc@gmail.com>
+# SPDX-License-Identifier: CC0-1.0
+#
+# Not enabled: GitHub runs only the workflows in .github/workflows. To enable this one:
+#   git mv .github/workflows-disabled/build.yml .github/workflows/build.yml
+
+name: Build
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # GitHub's Ubuntu runners have no KDE Frameworks 6
+    container: registry.opensuse.org/opensuse/tumbleweed:latest
+    steps:
+      - name: Install the tools
+        run: zypper --non-interactive install git-core tar gzip rpm-build AppStream clang
+
+      - uses: actions/checkout@v4
+
+      # The same build dependencies as the openSUSE package
+      - name: Install the build dependencies
+        run: rpmspec -q --buildrequires packaging/obs/phonekompanion.spec | xargs -d '\n' zypper --non-interactive install
+
+      - name: Build
+        run: |
+          cmake -B build
+          cmake --build build --parallel
+
+      - name: Check the formatting
+        run: |
+          cmake --build build --target clang-format
+          git diff --exit-code
+
+      - name: Validate the AppStream file
+        run: appstreamcli validate --no-net src/app/io.github.rkrajnc.phonekompanion.metainfo.xml
