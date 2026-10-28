@@ -14,8 +14,8 @@ Release:        0
 Summary:        Calls, phone apps and SMS on the desktop, next to KDE Connect
 License:        GPL-2.0-only OR GPL-3.0-only
 URL:            https://github.com/rkrajnc/phonekompanion
-# GitHub's tarball of the release tag v<version>; `osc service manualrun` downloads it
-Source0:        %{url}/archive/refs/tags/v%{version}/%{name}-%{version}.tar.gz
+# The release tag's source, from the _service on OBS, which also sets Version
+Source0:        %{name}-%{version}.tar.gz
 BuildRequires:  gcc-c++
 BuildRequires:  libphonenumber-devel
 BuildRequires:  cmake(KF6Config) >= %{kf6_version}

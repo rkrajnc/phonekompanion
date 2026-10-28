@@ -3,6 +3,20 @@ SPDX-FileCopyrightText: 2026 Rok Krajnc <rok.krajnc@gmail.com>
 SPDX-License-Identifier: CC0-1.0
 -->
 <services>
-  <!-- Downloads the spec's Source0 into the package: osc service manualrun -->
-  <service name="download_files" mode="manual"/>
+  <!-- On the OBS server, not at build time, so it also works for Fedora, Debian and Ubuntu -->
+  <!-- The release tag's source as phonekompanion-<version>.tar, the version from the tag -->
+  <service name="tar_scm">
+    <param name="url">https://github.com/rkrajnc/phonekompanion.git</param>
+    <param name="scm">git</param>
+    <param name="revision">v0.1.0</param>
+    <param name="versionformat">@PARENT_TAG@</param>
+    <param name="versionrewrite-pattern">v(.*)</param>
+    <param name="filename">phonekompanion</param>
+  </service>
+  <service name="recompress">
+    <param name="file">*.tar</param>
+    <param name="compression">gz</param>
+  </service>
+  <!-- The version into the spec, the .dsc and debian.changelog -->
+  <service name="set_version"/>
 </services>

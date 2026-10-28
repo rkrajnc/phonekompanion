@@ -18,10 +18,12 @@ It needs Qt and KDE Frameworks 6.8 or newer, so openSUSE Leap 15 and Ubuntu 24.0
 On Fedora, scrcpy comes from COPR and v4l2loopback from RPM Fusion; on Debian 13, scrcpy is in
 trixie-backports (contrib).
 
-## The source tarball
+## The source
 
-OBS takes GitHub's tarball of a release tag, `v<version>`, as the spec's `Source0` says. Tag the
-release and push the tag first:
+The `_service` runs on the OBS server: `tar_scm` takes the source of a release tag, `v<version>`,
+from GitHub, `recompress` makes it the spec's `phonekompanion-<version>.tar.gz`, and
+`set_version` writes the version from the tag into the spec, the `.dsc` and `debian.changelog`.
+There is no tarball to upload. Tag the release and push the tag first:
 
 ```
 git tag -a v0.1.0 -m "Phone Kompanion 0.1.0"
@@ -31,14 +33,13 @@ git push origin v0.1.0
 ## First upload
 
 ```
-sudo zypper install osc
+sudo zypper install osc obs-service-tar_scm obs-service-recompress obs-service-set_version
 osc checkout home:<user>                      # asks for the openSUSE account on first use
 cd home:<user>
 osc mkpac phonekompanion
 cd phonekompanion
 cp <repo>/packaging/obs/{phonekompanion.spec,phonekompanion.changes,_service} .
 cp <repo>/packaging/obs/{phonekompanion.dsc,debian.*} .
-osc service manualrun                         # downloads the tarball of the tag
 osc add *
 osc commit -m "Initial package"
 ```
@@ -47,25 +48,33 @@ In the project's repositories, add the distributions (`osc meta prj -e home:<use
 Repositories in the web interface). OBS rebuilds the package when a distribution's Qt changes;
 the compiled QML uses Qt's private API, so the package fits only the Qt it was built against.
 
+Fedora, Debian and Ubuntu stay "unresolvable" where two packages provide the same dependency
+(`system-logos`, FFmpeg's `-extra` libraries, `gpg`). In the project's configuration
+(`osc meta prjconf -e home:<user>`), choose them with:
+
+```
+Prefer: fedora-logos libavcodec61 libavformat61 libavcodec62 libavformat62 gpg
+```
+
 ## New versions
 
-Raise `project(... VERSION)` in `CMakeLists.txt`, `Version:` in the spec and the release in the
-AppStream file. For Debian, raise `Version:` and `DEBTRANSFORM-TAR:` in `phonekompanion.dsc` and
-add an entry to `debian.changelog` (`<version>-1`). Tag and push `v<version>`, add an entry with
-`osc vc`, then `osc rm` the old tarball, `osc service manualrun`, `osc add` the new one and
-`osc commit`.
+Raise `project(... VERSION)` in `CMakeLists.txt` and the release in the AppStream file. In
+`packaging/obs`, set the new tag in the `_service`'s `revision` and add an entry with
+`osc vc phonekompanion.changes`. Commit, tag and push `v<version>`, copy `_service` and
+`phonekompanion.changes` into the osc checkout and `osc commit` there. OBS fetches the tag and sets the version in the spec, the `.dsc`
+and `debian.changelog` itself; the versions in those files here stay as they are.
 
 ## Checking a build locally
 
 `osc build openSUSE_Tumbleweed x86_64` (or `Fedora_44`, `Debian_13`, ...) builds in a clean
 chroot. A quicker check against the installed system, without osc, from a tarball of HEAD named
-as GitHub's would be:
+as the `_service`'s, with the version of the last tag as set_version would set it:
 
 ```
-VERSION=0.1.0
+VERSION=$(git describe --tags --abbrev=0 | sed 's/^v//')
 T=$(mktemp -d); mkdir -p $T/SOURCES $T/SPECS
 git archive --prefix=phonekompanion-$VERSION/ -o $T/SOURCES/phonekompanion-$VERSION.tar.gz HEAD
-cp packaging/obs/phonekompanion.spec $T/SPECS/
+sed "s/^Version:.*/Version:        $VERSION/" packaging/obs/phonekompanion.spec > $T/SPECS/phonekompanion.spec
 rpmbuild -ba --define "_topdir $T" $T/SPECS/phonekompanion.spec
 ```
 
