@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Wed Oct 28 12:00:00 UTC 2026 - Rok Krajnc <rok.krajnc@gmail.com>
+
+- Update to version 0.1.1:
+  * Packaging for Fedora, Debian, Ubuntu and openSUSE Leap 16
+  * The source comes from the release tag on GitHub
+  * A README and screenshots, also in the AppStream file
+
+-------------------------------------------------------------------
 Tue Oct 27 21:00:00 UTC 2026 - Rok Krajnc <rok.krajnc@gmail.com>
 
 - Initial package, version 0.1.0:

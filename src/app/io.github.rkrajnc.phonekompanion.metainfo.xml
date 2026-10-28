@@ -55,6 +55,11 @@ SPDX-License-Identifier: CC0-1.0
   </provides>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.1.1" date="2026-10-28">
+      <description>
+        <p>Packages for Fedora, Debian, Ubuntu and openSUSE Leap 16, a README and screenshots.</p>
+      </description>
+    </release>
     <release version="0.1.0" date="2026-10-27"/>
   </releases>
 </component>
