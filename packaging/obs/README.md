@@ -56,6 +56,17 @@ Fedora, Debian and Ubuntu stay "unresolvable" where two packages provide the sam
 Prefer: fedora-logos libavcodec61 libavformat61 libavcodec62 libavformat62 gpg
 ```
 
+Ubuntu fails the build on lintian errors about the changelog that debtransform writes. In the same
+configuration, skip the checks there:
+
+```
+%if "%_repository" == "xUbuntu_26.10"
+BuildFlags: nochecks
+%endif
+```
+
+After changing the configuration, start the builds again with `osc rebuild`.
+
 ## New versions
 
 Raise `project(... VERSION)` in `CMakeLists.txt` and the release in the AppStream file. In
