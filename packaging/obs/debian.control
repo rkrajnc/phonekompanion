@@ -47,7 +47,6 @@ Depends: kdeconnect,
          qml6-module-qtquick-dialogs,
          qml6-module-qtquick-layouts,
          ${misc:Depends},
-         ${qt6:PrivateAbi},
          ${shlibs:Depends}
 # Calls over Bluetooth (PipeWire's telephony API and BlueZ), and the phone's screen, apps and camera
 Recommends: adb, bluez, pipewire, scrcpy, wireplumber

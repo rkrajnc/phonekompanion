@@ -21,6 +21,10 @@ ecm_target_qml_sources(phonekompanion SOURCES
     qml/CallsSettingsPage.qml
 )
 
+# QML bytecode only: the QML compiled to C++ calls Qt's private API, which ties the binary to the
+# exact Qt version it was built with
+set_target_properties(phonekompanion PROPERTIES QT_QMLCACHEGEN_ARGUMENTS "--only-bytecode")
+
 target_include_directories(phonekompanion PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
 target_link_libraries(phonekompanion PRIVATE

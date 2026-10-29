@@ -45,8 +45,7 @@ osc commit -m "Initial package"
 ```
 
 In the project's repositories, add the distributions (`osc meta prj -e home:<user>`, or
-Repositories in the web interface). OBS rebuilds the package when a distribution's Qt changes;
-the compiled QML uses Qt's private API, so the package fits only the Qt it was built against.
+Repositories in the web interface).
 
 Fedora, Debian and Ubuntu stay "unresolvable" where two packages provide the same dependency
 (`system-logos`, FFmpeg's `-extra` libraries, `gpg`). In the project's configuration

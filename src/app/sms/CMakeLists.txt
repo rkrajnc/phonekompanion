@@ -49,6 +49,9 @@ qt_add_qml_module(phonekompanionsms
         qml/SendingArea.qml
 )
 
+# QML bytecode only, like the app's module
+set_target_properties(phonekompanionsms PROPERTIES QT_QMLCACHEGEN_ARGUMENTS "--only-bytecode")
+
 target_sources(phonekompanionsmsplugin PRIVATE smsplugin.cpp)
 target_link_libraries(phonekompanionsmsplugin PRIVATE Qt::Gui Qt::Quick)
 
