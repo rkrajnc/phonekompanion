@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Thu Oct 29 23:03:15 UTC 2026 - Rok Krajnc <rok.krajnc@gmail.com>
+
+- Update to version 0.1.2:
+  * The QML is compiled to bytecode only, without Qt's private API,
+    so the app no longer fails to start after a Qt update
+  * The Debian package no longer depends on the exact Qt version
+
+-------------------------------------------------------------------
 Wed Oct 28 12:00:00 UTC 2026 - Rok Krajnc <rok.krajnc@gmail.com>
 
 - Update to version 0.1.1:
