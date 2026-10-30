@@ -4,6 +4,8 @@
 title: Phone Kompanion
 description: Phone calls, the phone's screen, apps and camera, and SMS on the KDE Plasma desktop
 repository: rkrajnc/phonekompanion
+# The content of Google Search Console's verification meta tag
+google_site_verification: 1M8ix6it3c5gTA_ZCcu5XF7pC96oOuPMovXms5eK7dw
 markdown: kramdown
 kramdown:
   input: GFM
