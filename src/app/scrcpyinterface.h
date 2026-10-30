@@ -53,6 +53,10 @@ public:
     bool isPairing() const;
     QString qrContent() const;
 
+    /**
+     * Has the daemon look for adb, scrcpy and scrcpy-server again; missingTools follows
+     */
+    Q_INVOKABLE void findTools();
     Q_INVOKABLE void mirrorScreen();
     Q_INVOKABLE void openApp(const QString &package);
     Q_INVOKABLE void showCamera(const QString &facing = QString());

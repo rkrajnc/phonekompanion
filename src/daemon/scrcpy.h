@@ -61,6 +61,12 @@ public:
     Q_SCRIPTABLE void setSetting(const QString &key, const QDBusVariant &value);
 
     /**
+     * Looks for adb, scrcpy and scrcpy-server again, as they may have been installed in the
+     * meantime. Answers with statusChanged if they changed.
+     */
+    Q_SCRIPTABLE void findTools();
+
+    /**
      * Pairs this computer with the phone, using the address and code from the phone's
      * "Pair device with pairing code" dialog. Answers with pairingFinished.
      */

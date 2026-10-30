@@ -38,7 +38,11 @@ Kirigami.ScrollablePage {
         adbDevice.currentIndex = Math.max(0, adbDevice.indexOfValue(settings.adbSerial));
     }
 
-    Component.onCompleted: loadSettings()
+    // The tools may have been installed while the phone stayed connected
+    Component.onCompleted: {
+        loadSettings();
+        scrcpy.findTools();
+    }
     onSettingsChanged: loadSettings()
 
     // Also while startQrPairing() has not answered yet; the phone page and its scrcpy may be gone first

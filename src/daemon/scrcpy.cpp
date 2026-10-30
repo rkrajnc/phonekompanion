@@ -823,6 +823,11 @@ QString Scrcpy::refreshApps()
     return QString();
 }
 
+void Scrcpy::findTools()
+{
+    m_adb->findTools();
+}
+
 QStringList Scrcpy::missingTools() const
 {
     return m_adb->missingTools();

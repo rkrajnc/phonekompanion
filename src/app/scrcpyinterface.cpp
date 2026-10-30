@@ -87,6 +87,11 @@ QString ScrcpyInterface::qrContent() const
     return m_qrContent;
 }
 
+void ScrcpyInterface::findTools()
+{
+    call(QStringLiteral("findTools"), {});
+}
+
 void ScrcpyInterface::mirrorScreen()
 {
     callAction(QStringLiteral("mirrorScreen"));
