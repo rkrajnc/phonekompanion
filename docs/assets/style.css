@@ -1,0 +1,64 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Rok Krajnc <rok.krajnc@gmail.com>
+ * SPDX-License-Identifier: CC0-1.0
+ */
+
+:root {
+    --bg: #fcfcfc;
+    --fg: #232629;
+    --dim: #5c6267;
+    --line: #dde0e3;
+    --code: #eff0f1;
+    --accent: #2980b9;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #1b1e20;
+        --fg: #eff0f1;
+        --dim: #a1a9b1;
+        --line: #3a3e44;
+        --code: #2a2e32;
+        --accent: #3daee9;
+    }
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 16px/1.6 "Noto Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.wrap { max-width: 860px; margin: 0 auto; padding: 0 20px; }
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+header.site { border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--bg); z-index: 1; }
+header.site .wrap { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 20px; min-height: 52px; }
+header.site .name { font-weight: bold; font-size: 18px; color: var(--fg); }
+header.site nav { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-left: auto; font-size: 15px; }
+
+main { padding-top: 12px; padding-bottom: 40px; }
+
+h1 { font-size: 2.2em; margin: 0.6em 0 0.1em; }
+h2 { margin-top: 2.2em; padding-bottom: 0.2em; border-bottom: 1px solid var(--line); }
+h3 { margin-top: 1.6em; }
+.tagline { font-size: 1.2em; color: var(--dim); margin-top: 0; }
+
+img { max-width: 100%; height: auto; display: block; margin: 1em auto; }
+
+code { background: var(--code); padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.9em; }
+pre { background: var(--code); padding: 12px 14px; border-radius: 6px; overflow-x: auto; line-height: 1.45; }
+pre code { background: none; padding: 0; }
+
+table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+
+blockquote { margin: 1em 0; padding: 0.4em 1em; border-left: 4px solid var(--accent); background: var(--code); border-radius: 0 6px 6px 0; }
+blockquote p { margin: 0.4em 0; }
+
+footer { border-top: 1px solid var(--line); padding-top: 16px; padding-bottom: 32px; color: var(--dim); font-size: 14px; }

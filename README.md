@@ -15,6 +15,8 @@ desktop, as a companion to [KDE Connect](https://kdeconnect.kde.org/).
 Phone Kompanion uses the phones paired in KDE Connect and adds what KDE Connect does not do by
 itself. It runs next to the KDE Connect from your distribution; there is nothing to replace.
 
+The [manual](https://rkrajnc.github.io/phonekompanion/) shows how to set up and use each feature.
+
 ## Features
 
 **Calls over Bluetooth**

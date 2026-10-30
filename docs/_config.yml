@@ -1,0 +1,10 @@
+# SPDX-FileCopyrightText: 2026 Rok Krajnc <rok.krajnc@gmail.com>
+# SPDX-License-Identifier: CC0-1.0
+
+title: Phone Kompanion
+description: Phone calls, the phone's screen, apps and camera, and SMS on the KDE Plasma desktop
+repository: rkrajnc/phonekompanion
+markdown: kramdown
+kramdown:
+  input: GFM
+  auto_ids: true

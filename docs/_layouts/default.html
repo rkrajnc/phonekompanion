@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<!--
+SPDX-FileCopyrightText: 2026 Rok Krajnc <rok.krajnc@gmail.com>
+SPDX-License-Identifier: CC0-1.0
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% if page.title %}{{ page.title }} - {% endif %}{{ site.title }}</title>
+  <meta name="description" content="{{ site.description }}">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="site">
+    <div class="wrap">
+      <a class="name" href="./">{{ site.title }}</a>
+      <nav>
+        <a href="#installing">Install</a>
+        <a href="#calls">Calls</a>
+        <a href="#messages">Messages</a>
+        <a href="#screen-mirroring-and-apps">Mirroring</a>
+        <a href="#command-line">CLI</a>
+        <a href="https://github.com/{{ site.repository }}">GitHub</a>
+      </nav>
+    </div>
+  </header>
+  <main class="wrap">
+    {{ content }}
+  </main>
+  <footer class="wrap">
+    Phone Kompanion is free software under the GPL.
+    Source, issues and releases on <a href="https://github.com/{{ site.repository }}">GitHub</a>.
+  </footer>
+</body>
+</html>
