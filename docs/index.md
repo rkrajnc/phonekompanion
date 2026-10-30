@@ -24,6 +24,13 @@ and adds what KDE Connect does not do by itself:
 
 It runs next to the KDE Connect from your distribution; there is nothing to replace.
 
+## Source code
+
+The source is on GitHub: [github.com/rkrajnc/phonekompanion](https://github.com/rkrajnc/phonekompanion),
+with the [releases](https://github.com/rkrajnc/phonekompanion/releases) and the
+[issues](https://github.com/rkrajnc/phonekompanion/issues). Phone Kompanion is free software,
+under GPL-2.0-only or GPL-3.0-only, or any later version accepted by KDE e.V.
+
 ## Installing
 
 Packages for openSUSE Tumbleweed and Leap 16, Fedora 44, Debian 13 and Ubuntu 26.10 are built on
